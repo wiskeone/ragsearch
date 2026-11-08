@@ -1,0 +1,80 @@
+# Django and web
+Django>=5.0.3
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.1
+django-filter>=23.5
+django-debug-toolbar>=4.3.0
+django-redis>=5.4.0
+drf_yasg>=1.21.7
+django-prometheus>=2.3.1
+
+# Async and queues
+celery>=5.3.6
+redis>=5.0.1
+flower>=2.0.1
+
+# AI/ML (без torch, он отдельно)
+transformers>=4.45.0
+accelerate>=1.6.0
+sentencepiece>=0.1.99
+protobuf>=4.25.0
+tokenizers>=0.19.0
+huggingface-hub>=1.7.1
+hf-transfer>=0.1.9
+sentence-transformers>=2.6.0
+optimum-quanto>=0.2.0
+
+# RAG and document processing
+PyMuPDF>=1.24.0
+pdfplumber>=0.11.0
+PyPDF2>=3.0.0
+python-docx>=1.1.0
+docx2txt>=0.8
+beautifulsoup4>=4.12.0
+lxml>=5.3.0
+markdown>=3.5.0
+chardet>=5.2.0
+pandas>=2.3.0
+openpyxl>=3.1.0
+python-magic>=0.4.27
+rank-bm25>=0.2.2
+langdetect>=1.0.9
+
+# Document parsing (additional formats)
+python-pptx>=1.0.2
+ebooklib>=0.18
+odfpy>=1.4.1
+striprtf>=0.0.26
+csvkit>=2.0.1 
+
+# Database
+psycopg2-binary>=2.9.9
+
+# Utils
+python-dotenv>=1.0.0
+gunicorn>=21.2.0
+tqdm>=4.67.1
+
+# Scientific
+numpy>=1.26.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+faiss-cpu>=1.7.4
+matplotlib>=3.7.0
+
+# Monitoring
+psutil>=5.9.0
+prometheus-client>=0.20.0
+
+# HTTP
+requests>=2.32.3
+aiohttp>=3.9.0
+
+# Security
+bcrypt>=4.1.0
+cryptography>=42.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-django>=4.7.0
+factory-boy>=3.3.0

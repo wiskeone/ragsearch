@@ -1,0 +1,19 @@
+{% extends 'rag/base.html' %}
+{% block content %}
+<h2>Мои коллекции</h2>
+<a href="{% url 'rag:collection_create' %}" class="btn btn-primary mb-3">Новая коллекция</a>
+<div class="list-group">
+    {% for c in collections %}
+    <a href="{% url 'rag:collection_detail' c.id %}" class="list-group-item list-group-item-action">
+        <div class="d-flex justify-content-between">
+            <strong>{{ c.name }}</strong>
+            <small>{{ c.created_at|date }}</small>
+        </div>
+        <p>{{ c.description|truncatewords:20 }}</p>
+    </a>
+    {% empty %}
+    <p>Нет коллекций. Создайте первую.</p>
+    {% endfor %}
+</div>
+{% include "rag/pagination.html" with page=collections %}
+{% endblock %}

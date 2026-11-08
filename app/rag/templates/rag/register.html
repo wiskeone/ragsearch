@@ -1,0 +1,21 @@
+{% extends 'rag/base.html' %}
+
+{% block title %}Регистрация - RAG Search{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Регистрация</div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-success">Зарегистрироваться</button>
+                    <a href="{% url 'rag:login' %}" class="btn btn-link">Уже есть аккаунт?</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

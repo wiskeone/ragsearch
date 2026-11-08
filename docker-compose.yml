@@ -1,0 +1,298 @@
+services:
+  # PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: rag_db
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ragsearch}
+      POSTGRES_USER: ${DB_USER:-rag_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secure_password_123}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker_volumes/postgres_backups:/backups:ro
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-rag_user} -d ${DB_NAME:-ragsearch}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: rag_redis
+    command: >
+      redis-server --appendonly yes
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
+      --tcp-keepalive 60
+    volumes:
+      - redis_data:/data
+    networks:
+      - rag_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+
+  # Django web (GPU)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_web
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, utility]
+        limits:
+          memory: ${GPU_MEMORY_LIMIT:-8G}
+          cpus: ${GPU_CPUS:-2}
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - PYTHONUNBUFFERED=1
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+      - ./media:/app/media
+      - static_volume:/app/static
+      - pip_cache:/root/.cache/pip
+      - huggingface_cache:/root/.cache/huggingface
+      - torch_cache:/root/.cache/torch
+      - faiss_data:/app/data/faiss_index
+    ports:
+      - "${DJANGO_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - rag_network
+    command: >
+      sh -c "cd /app && python manage.py migrate && python manage.py collectstatic --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 300 --worker-class sync"
+    runtime: nvidia
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Celery worker GPU (эмбеддинги и LLM)
+  celery_worker_gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag_celery_gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu, utility]
+        limits:
+          memory: ${GPU_MEMORY_LIMIT:-16G}
+          cpus: ${GPU_CPUS:-2}
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CUDA_VISIBLE_DEVICES=0
+      - PYTORCH_CUDA_ALLOC_CONF=max_split_size_mb:128
+      - PYTHONUNBUFFERED=1
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+      - ./media:/app/media
+      - pip_cache:/root/.cache/pip
+      - huggingface_cache:/root/.cache/huggingface
+      - torch_cache:/root/.cache/torch
+      - faiss_data:/app/data/faiss_index
+    depends_on:
+      - redis
+      - db
+    networks:
+      - rag_network
+    command: celery -A config worker --loglevel=info --pool=solo --concurrency=1 --queues=gpu_tasks --hostname=gpu_worker@%h
+    runtime: nvidia
+    restart: unless-stopped
+
+  # Celery worker CPU (лёгкие задачи, файловая обработка)
+  celery_worker_cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    container_name: rag_celery_cpu
+    deploy:
+      resources:
+        limits:
+          memory: ${CPU_MEMORY_LIMIT:-16G}
+          cpus: ${CPU_CPUS:-2}
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - PYTHONUNBUFFERED=1
+      - HF_ENDPOINT=${HF_ENDPOINT:-https://hf-mirror.com}
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+      - ./media:/app/media
+      - pip_cache:/root/.cache/pip
+      - faiss_data:/app/data/faiss_index
+    depends_on:
+      - redis
+      - db
+    networks:
+      - rag_network
+    command: celery -A config worker --loglevel=info --pool=solo --concurrency=1 --queues=cpu_tasks --hostname=cpu_worker@%h
+    restart: unless-stopped
+
+  # Celery beat
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    container_name: rag_celery_beat
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app
+    depends_on:
+      - redis
+      - db
+    networks:
+      - rag_network
+    command: celery -A config beat --loglevel=info --pidfile=/tmp/celerybeat.pid
+    restart: unless-stopped
+
+  # Flower (мониторинг)
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile.cpu
+    container_name: rag_flower
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+    env_file:
+      - .env
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    volumes:
+      - ./app:/app
+    depends_on:
+      - redis
+      - celery_worker_gpu
+      - celery_worker_cpu
+    networks:
+      - rag_network
+    command: celery -A config flower --port=5555 --inspect_timeout=30.0
+    restart: unless-stopped
+
+  # Nginx
+  nginx:
+    image: nginx:alpine
+    container_name: rag_nginx
+    ports:
+      - "${NGINX_PORT:-80}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/app/static:ro
+      - ./media:/app/media:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      - web
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+  # pgAdmin (опционально)
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: rag_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:v3.11.0
+    container_name: rag_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:12.4.2
+    container_name: rag_grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - rag_network
+    restart: unless-stopped
+
+networks:
+  rag_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  static_volume:
+  pip_cache:
+  huggingface_cache:
+  torch_cache:
+  faiss_data:
+  pgadmin_data:
+  prometheus_data:
+  grafana_data:

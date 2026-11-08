@@ -1,0 +1,249 @@
+{% load static %}
+<div class="full-width-form">
+    <form method="post" id="collectionForm">
+        {% csrf_token %}
+        <input type="hidden" name="action" id="formAction" value="{% if edit_mode %}update{% else %}create{% endif %}">
+
+        <!-- Основная информация -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2">Основная информация</h5>
+            <div class="mb-3">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+                <div class="form-text">Дайте коллекции понятное название</div>
+                <div class="text-danger small name-errors"></div>
+            </div>
+            <div class="mb-3">
+                {{ form.description.label_tag }}
+                {{ form.description }}
+                <div class="form-text">Опишите назначение и содержание</div>
+                <div class="text-danger small description-errors"></div>
+            </div>
+            {% if request.user.is_staff %}
+            <div class="mb-3 form-check form-switch">
+                {{ form.is_public }}
+                <label class="form-check-label" for="{{ form.is_public.id_for_label }}">Публичная коллекция</label>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Стратегии разделения (карточки с данными) -->
+        <div class="mb-4">
+            <h5 class="border-bottom pb-2">Стратегия разделения на чанки</h5>
+            <div class="row g-3 mb-3" id="strategyCards">
+                <div class="col-md-4">
+                    <div class="card strategy-card p-3 text-center" data-strategy="recursive" data-size="1000" data-overlap="200">
+                        <i class="bi bi-files fs-2 text-primary"></i>
+                        <h6 class="mt-2">Рекурсивное</h6>
+                        <small>По структуре документа</small>
+                        <div class="mt-2"><span class="badge bg-primary-soft text-primary">1000/200</span></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card strategy-card p-3 text-center" data-strategy="semantic" data-size="1500" data-overlap="300">
+                        <i class="bi bi-chat-square-quote fs-2 text-primary"></i>
+                        <h6 class="mt-2">Семантическое</h6>
+                        <small>По смыслу</small>
+                        <div class="mt-2"><span class="badge bg-primary-soft text-primary">1500/300</span></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card strategy-card p-3 text-center" data-strategy="paragraph" data-size="1500" data-overlap="300">
+                        <i class="bi bi-paragraph fs-2 text-primary"></i>
+                        <h6 class="mt-2">По параграфам</h6>
+                        <small>По абзацам</small>
+                        <div class="mt-2"><span class="badge bg-primary-soft text-primary">1500/300</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="customStrategyBtn">Свои настройки</button>
+            </div>
+        </div>
+
+        <!-- Детальные настройки (скрыты) -->
+        <div id="customSettings" style="display: none;">
+            <h5 class="border-bottom pb-2">Детальные настройки</h5>
+            <div class="row">
+                <div class="col-md-6 mb-3">{{ form.chunk_size.label_tag }} {{ form.chunk_size }}</div>
+                <div class="col-md-6 mb-3">{{ form.chunk_overlap.label_tag }} {{ form.chunk_overlap }}</div>
+            </div>
+            <div class="form-check form-switch mb-3">
+                {{ form.auto_process }}
+                <label class="form-check-label" for="{{ form.auto_process.id_for_label }}">Автоматическая обработка</label>
+            </div>
+        </div>
+
+        <!-- Визуализация разделения -->
+        <div id="visualizationBlock" class="card bg-light mt-3">
+            <div class="card-body">
+                <h6 class="card-title"><i class="bi bi-eye me-1"></i>Визуализация разделения на чанки</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <small>Размер чанка: <span id="chunkSizeDisplay" class="fw-bold text-primary">1000</span></small>
+                    <small>Перекрытие: <span id="chunkOverlapDisplay" class="fw-bold text-primary">200</span></small>
+                </div>
+                <div class="chunk-visualization mb-2">
+                    <div class="document-bar bg-secondary bg-opacity-25 rounded" style="height: 28px; position: relative;">
+                        <div class="chunk chunk1 bg-primary position-absolute" style="left:0; width:50%; height:100%; border-radius:6px 0 0 6px; opacity:0.7;"></div>
+                        <div class="chunk chunk2 bg-primary position-absolute" style="left:40%; width:50%; height:100%; border-radius:0 6px 6px 0; opacity:0.7;"></div>
+                        <div class="overlap position-absolute" style="left:40%; width:10%; height:100%; background-color:#3b82f6; opacity:0.6; border-radius:2px;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1 small">
+                        <span>Чанк 1</span>
+                        <span class="text-primary fw-semibold" id="overlapPercentLabel">Перекрытие (20%)</span>
+                        <span>Чанк 2</span>
+                    </div>
+                </div>
+                <div class="form-text"><i class="bi bi-lightbulb"></i> Перекрытие помогает сохранять контекст между фрагментами. Рекомендуется 10-20% от размера чанка.</div>
+            </div>
+        </div>
+
+        {{ form.chunking_strategy }}
+
+        <div class="mt-4 border-top pt-3 d-flex justify-content-between">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <div>
+                {% if edit_mode %}
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='update'">Сохранить</button>
+                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='update_and_add'">Сохранить и добавить документы</button>
+                {% else %}
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='create'">Создать коллекцию</button>
+                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='create_and_add'">Создать и добавить документы</button>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .full-width-form .form-control, .full-width-form .form-select, .full-width-form textarea {
+        width: 100% !important;
+        border-radius: 12px !important;
+        padding: 0.6rem 1rem;
+    }
+    .strategy-card {
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid #dee2e6;
+        background: white;
+    }
+    .strategy-card:hover, .strategy-card.active {
+        border-color: #2aa87a;
+        background: rgba(42,168,122,0.1);
+        box-shadow: 0 0 0 2px #2aa87a;
+    }
+    .strategy-card.active {
+        background: rgba(42,168,122,0.15);
+    }
+    .chunk-visualization .overlap {
+        transition: width 0.2s ease, left 0.2s ease;
+    }
+</style>
+
+<script>
+    // Функция инициализации обработчиков стратегий и визуализации, вызываемая после вставки формы в модалку
+    window.initStrategyHandlers = function(form) {
+        const sizeInput = form.querySelector('[name="chunk_size"]');
+        const overlapInput = form.querySelector('[name="chunk_overlap"]');
+        const strategySelect = form.querySelector('[name="chunking_strategy"]');
+        const customDiv = document.getElementById('customSettings');
+        const visualizeDiv = document.getElementById('visualizationBlock');
+
+        function updateVisualization() {
+            let size = parseInt(sizeInput?.value) || 1000;
+            let overlap = parseInt(overlapInput?.value) || 200;
+            document.getElementById('chunkSizeDisplay').innerText = size;
+            document.getElementById('chunkOverlapDisplay').innerText = overlap;
+            let percent = Math.min(50, Math.round(overlap / size * 100));
+            document.getElementById('overlapPercentLabel').innerHTML = `Перекрытие (${percent}%)`;
+            let maxWidth = 40;
+            let overlapWidth = Math.min(maxWidth, Math.max(3, overlap / size * 40));
+            let chunkWidth = 50 - overlapWidth / 2;
+            const c1 = document.querySelector('#visualizationBlock .chunk1');
+            const c2 = document.querySelector('#visualizationBlock .chunk2');
+            const ov = document.querySelector('#visualizationBlock .overlap');
+            if (c1 && c2 && ov) {
+                c1.style.width = `${chunkWidth}%`;
+                c2.style.left = `${50 - overlapWidth/2}%`;
+                c2.style.width = `${chunkWidth}%`;
+                ov.style.left = `${50 - overlapWidth/2}%`;
+                ov.style.width = `${overlapWidth}%`;
+            }
+            if (overlap >= size) overlapInput.classList.add('is-invalid');
+            else overlapInput.classList.remove('is-invalid');
+        }
+
+        function setStrategy(strategy, size, overlap) {
+            if (sizeInput) sizeInput.value = size;
+            if (overlapInput) overlapInput.value = overlap;
+            if (strategySelect) strategySelect.value = strategy;
+            if (strategy === 'custom') {
+                if (customDiv) customDiv.style.display = 'block';
+            } else {
+                if (customDiv) customDiv.style.display = 'none';
+            }
+            document.querySelectorAll('.strategy-card').forEach(card => {
+                if (card.dataset.strategy === strategy) card.classList.add('active');
+                else card.classList.remove('active');
+            });
+            if (visualizeDiv) visualizeDiv.style.display = 'block';
+            updateVisualization();
+        }
+
+        // Привязка событий к карточкам
+        document.querySelectorAll('.strategy-card').forEach(card => {
+            card.removeEventListener('click', card._handler);
+            const handler = () => setStrategy(card.dataset.strategy, parseInt(card.dataset.size), parseInt(card.dataset.overlap));
+            card.addEventListener('click', handler);
+            card._handler = handler;
+        });
+
+        const customBtn = document.getElementById('customStrategyBtn');
+        if (customBtn) {
+            customBtn.removeEventListener('click', customBtn._handler);
+            const handler = () => setStrategy('custom', sizeInput?.value || 1000, overlapInput?.value || 200);
+            customBtn.addEventListener('click', handler);
+            customBtn._handler = handler;
+        }
+
+        if (sizeInput && overlapInput) {
+            sizeInput.removeEventListener('input', sizeInput._inputHandler);
+            overlapInput.removeEventListener('input', overlapInput._inputHandler);
+            const sizeHandler = () => setStrategy('custom', sizeInput.value, overlapInput.value);
+            const overlapHandler = () => setStrategy('custom', sizeInput.value, overlapInput.value);
+            sizeInput.addEventListener('input', sizeHandler);
+            overlapInput.addEventListener('input', overlapHandler);
+            sizeInput._inputHandler = sizeHandler;
+            overlapInput._inputHandler = overlapHandler;
+        }
+
+        // Инициализация текущих значений
+        let initStrategy = strategySelect?.value;
+        if (initStrategy === 'custom') {
+            setStrategy('custom', sizeInput?.value || 1000, overlapInput?.value || 200);
+        } else if (initStrategy) {
+            let found = false;
+            document.querySelectorAll('.strategy-card').forEach(card => {
+                if (card.dataset.strategy === initStrategy) {
+                    setStrategy(initStrategy, parseInt(card.dataset.size), parseInt(card.dataset.overlap));
+                    found = true;
+                }
+            });
+            if (!found && document.querySelectorAll('.strategy-card').length) {
+                const first = document.querySelector('.strategy-card');
+                setStrategy(first.dataset.strategy, parseInt(first.dataset.size), parseInt(first.dataset.overlap));
+            }
+        } else {
+            const first = document.querySelector('.strategy-card');
+            if (first) setStrategy(first.dataset.strategy, parseInt(first.dataset.size), parseInt(first.dataset.overlap));
+        }
+    };
+
+    // Вызов инициализации, если форма уже в DOM (для случая, когда форма загружена через AJAX)
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('collectionForm');
+        if (form && typeof window.initStrategyHandlers === 'function') {
+            window.initStrategyHandlers(form);
+        }
+    });
+</script>

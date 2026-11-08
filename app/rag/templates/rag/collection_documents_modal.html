@@ -1,0 +1,65 @@
+<!-- templates/rag/collection_documents_modal.html -->
+<div data-collection-id="{{ collection.id }}">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Документы коллекции «{{ collection.name }}»</h5>
+        <button class="btn btn-primary btn-sm upload-doc-btn">
+            <i class="bi bi-plus-lg me-1"></i> Загрузить документ
+        </button>
+    </div>
+
+    {% if documents %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Размер</th>
+                    <th>Статус</th>
+                    <th>Дата</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documents %}
+                <tr>
+                    <td>
+                        <a href="#" class="text-decoration-none doc-detail-link" data-id="{{ doc.id }}">{{ doc.title|default:doc.original_filename }}</a>
+                    </td>
+                    <td>{{ doc.file_size_mb|floatformat:1 }} МБ</td>
+                    <td>
+                        {% if doc.status == 'processed' %}
+                        <span class="badge bg-success">Обработан</span>
+                        {% elif doc.status == 'processing' %}
+                        <span class="badge bg-warning text-dark">В обработке</span>
+                        {% elif doc.status == 'error' %}
+                        <span class="badge bg-danger">Ошибка</span>
+                        {% else %}
+                        <span class="badge bg-secondary">{{ doc.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ doc.uploaded_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-primary edit-document" data-id="{{ doc.id }}" title="Редактировать">
+                                <i class="bi bi-pencil"></i>
+                            </button>
+                            <button class="btn btn-outline-danger delete-document" data-id="{{ doc.id }}" data-name="{{ doc.title|default:doc.original_filename }}" title="Удалить">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            <a href="{% url 'rag:document_download' doc.id %}" class="btn btn-outline-secondary" title="Скачать">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4">
+        <i class="bi bi-file-earmark-text fs-1 text-secondary"></i>
+        <p class="mt-2">В этой коллекции пока нет документов.</p>
+    </div>
+    {% endif %}
+</div>

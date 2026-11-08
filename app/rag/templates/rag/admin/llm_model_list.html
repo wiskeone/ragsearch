@@ -1,0 +1,272 @@
+{% extends 'rag/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>LLM модели</h2>
+    <a href="{% url 'rag:llm_model_upload' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Добавить модель
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="llmModelsTable">
+                <thead>
+                    <tr>
+                        <th>Название</th>
+                        <th>HF ID</th>
+                        <th>Тип</th>
+                        <th>Параметры</th>
+                        <th>Статус загрузки</th>
+                        <th>По умолчанию</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for model in models %}
+                    <tr id="model-{{ model.id }}">
+                        <td>
+                            {{ model.display_name|default:model.name }}
+                            <button class="btn btn-sm btn-link text-primary model-details-btn" data-id="{{ model.id }}" title="Детали">
+                                <i class="bi bi-info-circle"></i>
+                            </button>
+                        </td>
+                        <td><code>{{ model.model_id }}</code></td>
+                        <td>{{ model.get_model_type_display }}</td>
+                        <td>{% if model.parameter_count %}{{ model.parameter_count|floatformat:"0" }}{% else %}—{% endif %}</td>
+                        <td class="status-cell">
+                            {% if model.download_status == 'completed' %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Загружена</span>
+                            {% elif model.download_status == 'downloading' %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" style="width: {{ model.download_progress }}%"></div>
+                                    </div>
+                                    <span class="badge bg-primary">{{ model.download_progress }}%</span>
+                                    <button class="btn btn-sm btn-outline-danger cancel-download" data-id="{{ model.id }}">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </div>
+                            {% elif model.download_status == 'failed' %}
+                                <span class="badge bg-danger" title="{{ model.download_error }}">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Ошибка
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">Не загружена</span>
+                            {% endif %}
+                          </td>
+                          <td>{% if model.is_default %}<i class="bi bi-star-fill text-warning"></i>{% endif %}</td>
+                          <td>
+                              <button class="btn btn-sm btn-outline-primary set-default" data-id="{{ model.id }}">По умолчанию</button>
+                              {% if model.download_status == 'completed' %}
+                              <button class="btn btn-sm btn-outline-warning redownload-model" data-id="{{ model.id }}">
+                                  <i class="bi bi-arrow-repeat"></i> Перекачать
+                              </button>
+                              {% elif model.download_status != 'downloading' %}
+                              <button class="btn btn-sm btn-outline-secondary download-model" data-id="{{ model.id }}">
+                                  <i class="bi bi-cloud-download"></i> Скачать
+                              </button>
+                              {% endif %}
+                              <button class="btn btn-sm btn-outline-danger delete-model" data-id="{{ model.id }}">
+                                  <i class="bi bi-trash"></i>
+                              </button>
+                          </td>
+                      </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center">Нет моделей. <a href="{% url 'rag:llm_model_upload' %}">Добавить</a></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно деталей модели -->
+<div class="modal fade" id="modelDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Детали модели</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modelDetailsBody">
+                <div class="text-center"><div class="spinner-border text-primary"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modalElement = document.getElementById('modelDetailsModal');
+    const modal = new bootstrap.Modal(modalElement);
+
+    function updateStatus(modelId) {
+        fetch(`/api/llm/${modelId}/download_status/`)
+            .then(r => r.json())
+            .then(data => {
+                const row = document.querySelector(`#model-${modelId} .status-cell`);
+                if (!row) return;
+                if (data.status === 'completed') {
+                    row.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Загружена</span>';
+                    const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
+                    if (actionsCell && !actionsCell.querySelector('.redownload-model')) {
+                        const redownloadBtn = document.createElement('button');
+                        redownloadBtn.className = 'btn btn-sm btn-outline-warning redownload-model';
+                        redownloadBtn.setAttribute('data-id', modelId);
+                        redownloadBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Перекачать';
+                        const downloadBtn = actionsCell.querySelector('.download-model');
+                        if (downloadBtn) downloadBtn.replaceWith(redownloadBtn);
+                        else actionsCell.insertBefore(redownloadBtn, actionsCell.querySelector('.delete-model'));
+                        attachRedownloadHandler(modelId);
+                    }
+                } else if (data.status === 'downloading') {
+                    row.innerHTML = `
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height: 8px;">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: ${data.progress}%"></div>
+                            </div>
+                            <span class="badge bg-primary">${data.progress}%</span>
+                            <button class="btn btn-sm btn-outline-danger cancel-download" data-id="${modelId}">
+                                <i class="bi bi-x-circle"></i>
+                            </button>
+                        </div>
+                    `;
+                    attachCancelHandler(modelId);
+                    setTimeout(() => updateStatus(modelId), 2000);
+                } else if (data.status === 'failed') {
+                    row.innerHTML = `<span class="badge bg-danger" title="${data.error}"><i class="bi bi-exclamation-triangle-fill"></i> Ошибка</span>`;
+                    const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
+                    if (actionsCell && !actionsCell.querySelector('.download-model')) {
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.className = 'btn btn-sm btn-outline-secondary download-model';
+                        downloadBtn.setAttribute('data-id', modelId);
+                        downloadBtn.innerHTML = '<i class="bi bi-cloud-download"></i> Скачать';
+                        const redownloadBtn = actionsCell.querySelector('.redownload-model');
+                        if (redownloadBtn) redownloadBtn.replaceWith(downloadBtn);
+                        else actionsCell.insertBefore(downloadBtn, actionsCell.querySelector('.delete-model'));
+                        attachDownloadHandler(modelId);
+                    }
+                } else {
+                    row.innerHTML = '<span class="badge bg-secondary">Не загружена</span>';
+                    const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
+                    if (actionsCell && !actionsCell.querySelector('.download-model')) {
+                        const downloadBtn = document.createElement('button');
+                        downloadBtn.className = 'btn btn-sm btn-outline-secondary download-model';
+                        downloadBtn.setAttribute('data-id', modelId);
+                        downloadBtn.innerHTML = '<i class="bi bi-cloud-download"></i> Скачать';
+                        const redownloadBtn = actionsCell.querySelector('.redownload-model');
+                        if (redownloadBtn) redownloadBtn.replaceWith(downloadBtn);
+                        else actionsCell.insertBefore(downloadBtn, actionsCell.querySelector('.delete-model'));
+                        attachDownloadHandler(modelId);
+                    }
+                }
+            });
+    }
+
+    function attachDownloadHandler(modelId) {
+        const btn = document.querySelector(`#model-${modelId} .download-model`);
+        if (btn && !btn.hasListener) {
+            btn.addEventListener('click', () => {
+                fetch(`/api/llm/${modelId}/download/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                    .then(r => r.json())
+                    .then(data => { if (data.success) updateStatus(modelId); else alert(data.error); });
+            });
+            btn.hasListener = true;
+        }
+    }
+
+    function attachRedownloadHandler(modelId) {
+        const btn = document.querySelector(`#model-${modelId} .redownload-model`);
+        if (btn && !btn.hasListener) {
+            btn.addEventListener('click', () => {
+                if (confirm('Перекачать модель? Старая версия будет удалена.')) {
+                    fetch(`/api/llm/${modelId}/download/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                        .then(r => r.json())
+                        .then(data => { if (data.success) updateStatus(modelId); else alert(data.error); });
+                }
+            });
+            btn.hasListener = true;
+        }
+    }
+
+    function attachCancelHandler(modelId) {
+        const btn = document.querySelector(`#model-${modelId} .cancel-download`);
+        if (btn && !btn.hasListener) {
+            btn.addEventListener('click', () => {
+                fetch(`/api/llm/${modelId}/cancel_download/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                    .then(r => r.json())
+                    .then(data => { if (data.success) updateStatus(modelId); });
+            });
+            btn.hasListener = true;
+        }
+    }
+
+    document.querySelectorAll('.set-default').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            fetch(`/api/llm/${id}/set_default/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                .then(r => r.json())
+                .then(data => { if (data.success) location.reload(); else alert(data.error); });
+        });
+    });
+
+    document.querySelectorAll('.download-model').forEach(btn => attachDownloadHandler(btn.dataset.id));
+    document.querySelectorAll('.redownload-model').forEach(btn => attachRedownloadHandler(btn.dataset.id));
+    document.querySelectorAll('.cancel-download').forEach(btn => attachCancelHandler(btn.dataset.id));
+    document.querySelectorAll('.delete-model').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!confirm('Удалить модель?')) return;
+            const id = btn.dataset.id;
+            fetch(`/api/llm/${id}/delete/`, { method: 'POST', headers: { 'X-CSRFToken': '{{ csrf_token }}' } })
+                .then(r => r.json())
+                .then(data => { if (data.success) location.reload(); else alert(data.error); });
+        });
+    });
+
+    // Кнопки деталей модели
+    document.querySelectorAll('.model-details-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const id = btn.dataset.id;
+            const body = document.getElementById('modelDetailsBody');
+            body.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div></div>';
+            modal.show();
+            try {
+                const resp = await fetch(`/api/llm/${id}/details/`);
+                const data = await resp.json();
+                body.innerHTML = `
+                    <table class="table table-sm table-borderless">
+                        <tr><th>Название:</th><td>${data.display_name || data.name}</td></tr>
+                        <tr><th>HF ID:</th><td><code>${data.model_id}</code></td></tr>
+                        <tr><th>Тип:</th><td>${data.model_type_display}</td></tr>
+                        <tr><th>Параметры:</th><td>${data.parameter_count ? (data.parameter_count/1e9).toFixed(2)+'B' : '—'}</td></tr>
+                        <tr><th>Квантизация:</th><td>${data.quantization || '—'}</td></tr>
+                        <tr><th>Локальный путь:</th><td><code>${data.local_path || '—'}</code></td></tr>
+                        <tr><th>Статус загрузки:</th><td>${data.download_status_display}</td></tr>
+                        <tr><th>Создана:</th><td>${new Date(data.created_at).toLocaleString()}</td></tr>
+                        ${data.download_error ? `<tr><th>Ошибка:</th><td class="text-danger">${data.download_error}</td></tr>` : ''}
+                    </table>
+                `;
+            } catch(e) {
+                body.innerHTML = '<div class="alert alert-danger">Ошибка загрузки деталей</div>';
+            }
+        });
+    });
+
+    // Автообновление для загружающихся моделей
+    document.querySelectorAll('#llmModelsTable tr').forEach(row => {
+        const statusCell = row.querySelector('.status-cell');
+        if (statusCell && statusCell.innerText.includes('Загрузка')) {
+            const id = row.id.split('-')[1];
+            updateStatus(id);
+        }
+    });
+});
+</script>
+{% endblock %}

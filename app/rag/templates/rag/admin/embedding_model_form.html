@@ -1,0 +1,494 @@
+{% extends 'rag/base.html' %}
+{% load static %}
+
+{% block title %}Загрузка модели эмбеддингов — RAG Search{% endblock %}
+
+{% block extra_css %}
+<style>
+    .model-card-item {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        height: 100%;
+    }
+    .model-card-item:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-3px);
+        background: rgba(0, 154, 99, 0.05);
+    }
+    .model-card-item.selected {
+        background: rgba(0, 154, 99, 0.15);
+        border-color: var(--primary-color);
+    }
+    .model-name { font-weight: 600; font-size: 1rem; margin-bottom: 0.25rem; }
+    .model-author { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .model-stats { display: flex; gap: 0.75rem; font-size: 0.8rem; color: var(--text-secondary); flex-wrap: wrap; }
+    .model-stat-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2px 8px;
+        border-radius: 20px;
+    }
+
+    .search-results-container { max-height: 400px; overflow-y: auto; }
+    .search-result-item {
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .search-result-item:hover { background: rgba(0, 154, 99, 0.05); }
+    .search-result-item.selected {
+        background: rgba(0, 154, 99, 0.1);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .validation-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.85rem;
+        padding: 3px 8px;
+        border-radius: 20px;
+        margin-left: 10px;
+    }
+    .validation-success { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid rgba(40, 167, 69, 0.3); }
+    .validation-error { background: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.3); }
+    .validation-loading { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+
+    .model-details-card {
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 8px;
+        padding: 12px;
+        margin-top: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .model-detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .model-detail-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card bg-dark">
+            <div class="card-header">
+                <h4><i class="bi bi-vector-pen me-2" style="color: var(--primary-color);"></i> Добавить модель эмбеддингов с Hugging Face</h4>
+            </div>
+            <div class="card-body">
+                <form method="post" id="uploadForm">
+                    {% csrf_token %}
+
+                    <!-- Основная информация -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Основная информация</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Имя модели *</label>
+                                {{ form.name }}
+                                <div class="form-text">{{ form.name.help_text }}</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">Отображаемое имя</label>
+                                {{ form.display_name }}
+                                <div class="form-text">{{ form.display_name.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hugging Face параметры -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Hugging Face параметры</h5>
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label small text-muted">Hugging Face ID *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-dark border-secondary">https://huggingface.co/</span>
+                                    {{ form.model_id }}
+                                    <button type="button" class="btn btn-outline-primary" id="validateModelBtn">
+                                        <i class="bi bi-check-circle"></i> Проверить
+                                    </button>
+                                </div>
+                                <div class="form-text">{{ form.model_id.help_text }}</div>
+                                <div id="validationIndicators" class="mt-2">
+                                    <span class="validation-indicator validation-success d-none" id="validationSuccess">
+                                        <i class="bi bi-check-circle-fill"></i> Модель найдена
+                                    </span>
+                                    <span class="validation-indicator validation-error d-none" id="validationError">
+                                        <i class="bi bi-x-circle-fill"></i> Модель не найдена
+                                    </span>
+                                    <span class="validation-indicator validation-loading d-none" id="validationLoading">
+                                        <i class="bi bi-hourglass-split"></i> Проверка...
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Ревизия</label>
+                                {{ form.model_version }}
+                            </div>
+                        </div>
+                        <div id="modelDetails" class="model-details-card d-none mt-3"></div>
+                    </div>
+
+                    <!-- Поиск моделей -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Поиск моделей эмбеддингов</h5>
+                        <div class="card bg-dark-transparent">
+                            <div class="card-header bg-transparent border-bottom">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Найдите модель в каталоге</span>
+                                    <span class="badge bg-secondary" id="searchResultsCount">0 результатов</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="modelSearchInput" placeholder="Поиск моделей эмбеддингов...">
+                                    <button class="btn btn-primary" type="button" id="buttonSearch">
+                                        <i class="bi bi-search"></i> Найти
+                                    </button>
+                                </div>
+                                <div class="search-results-container" id="searchResults">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="bi bi-search display-6 mb-2"></i>
+                                        <p>Начните поиск моделей эмбеддингов</p>
+                                    </div>
+                                </div>
+                                <div class="search-pagination d-none mt-3" id="searchPagination">
+                                    <nav>
+                                        <ul class="pagination justify-content-center mb-0">
+                                            <li class="page-item"><button class="page-link" id="prevPage" disabled>Назад</button></li>
+                                            <li class="page-item"><span class="page-link bg-transparent border-0" id="pageInfo">Страница 1</span></li>
+                                            <li class="page-item"><button class="page-link" id="nextPage" disabled>Вперед</button></li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Популярные модели -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="mb-0">Популярные модели эмбеддингов</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="refreshTopModels">
+                                <i class="bi bi-arrow-clockwise"></i> Обновить
+                            </button>
+                        </div>
+                        <div class="row g-3" id="popularModelsList">
+                            <div class="col-12 text-center py-4">
+                                <div class="spinner-border text-primary" role="status"></div>
+                                <p class="text-muted mt-2">Загрузка...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Параметры модели -->
+                    <div class="mb-4">
+                        <h5 class="mb-3">Параметры модели</h5>
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Размерность</label>
+                                {{ form.embedding_dim }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Макс. токенов</label>
+                                {{ form.max_tokens }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small text-muted">Лицензия</label>
+                                {{ form.license_type }}
+                            </div>
+                        </div>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.is_multilingual }}
+                                    <label class="form-check-label" for="{{ form.is_multilingual.id_for_label }}">Мультиязычная</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.is_default }}
+                                    <label class="form-check-label" for="{{ form.is_default.id_for_label }}">По умолчанию</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Активна</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопки -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'rag:embedding_model_list' %}" class="btn btn-outline-secondary">Отмена</a>
+                        <div>
+                            <input type="checkbox" name="download_now" id="download_now" class="form-check-input me-2">
+                            <label for="download_now" class="form-check-label me-3">Скачать сразу</label>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-cloud-arrow-up me-1"></i> Добавить модель
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast уведомления -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="liveToast" class="toast" role="alert">
+        <div class="toast-header bg-dark text-white">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto" id="toastTitle">Уведомление</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body bg-dark text-white" id="toastMessage"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let currentPage = 1;
+    let totalPages = 1;
+    let currentSearchQuery = '';
+    let selectedModelId = null;
+
+    function showToast(title, message, type = 'info') {
+        const toastEl = document.getElementById('liveToast');
+        document.getElementById('toastTitle').innerHTML = `<i class="bi bi-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>${title}`;
+        document.getElementById('toastMessage').textContent = message;
+        new bootstrap.Toast(toastEl).show();
+    }
+
+    function formatNumber(num) {
+        if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+        if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+        if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+        return num;
+    }
+
+    async function loadTopModels() {
+        const container = document.getElementById('popularModelsList');
+        try {
+            const resp = await fetch('/api/huggingface/?action=top_embedding_models&limit=5');
+            const data = await resp.json();
+            if (data.models && data.models.length) {
+                let html = '';
+                data.models.forEach(model => {
+                    const dim = model.tags?.find(t => t.includes('dim'))?.replace('dim', '') || '?';
+                    html += `
+                        <div class="col-xl-3 col-lg-4 col-md-6">
+                            <div class="model-card-item" data-model-id="${model.id}">
+                                <div class="model-name">${model.name}</div>
+                                <div class="model-author">${model.author}</div>
+                                <div class="model-stats">
+                                    <span class="model-stat-item"><i class="bi bi-download"></i> ${formatNumber(model.downloads)}</span>
+                                    <span class="model-stat-item"><i class="bi bi-vector"></i> ${dim}d</span>
+                                </div>
+                                <div class="mt-2">
+                                    <button class="btn btn-sm btn-outline-primary w-100 select-model-btn" data-model-id="${model.id}">
+                                        <i class="bi bi-check-lg"></i> Выбрать
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                attachModelCardEvents();
+            } else {
+                container.innerHTML = '<div class="col-12 text-center text-muted">Нет популярных моделей</div>';
+            }
+        } catch (err) {
+            container.innerHTML = '<div class="col-12 text-center text-danger">Ошибка загрузки</div>';
+        }
+    }
+
+    function attachModelCardEvents() {
+        document.querySelectorAll('.model-card-item').forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (e.target.closest('.select-model-btn')) return;
+                document.querySelectorAll('.model-card-item').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                selectModel(this.dataset.modelId);
+            });
+            const btn = card.querySelector('.select-model-btn');
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectModel(btn.dataset.modelId);
+                });
+            }
+        });
+    }
+
+    async function searchModels(query, page = 1) {
+        currentSearchQuery = query;
+        currentPage = page;
+        document.getElementById('searchResults').innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="text-muted mt-2">Поиск...</p></div>';
+        try {
+            const params = new URLSearchParams({ action: 'search_embedding', q: query, page, limit: 10 });
+            const resp = await fetch(`/api/huggingface/?${params}`);
+            const data = await resp.json();
+            if (data.results && data.results.length) {
+                displaySearchResults(data.results, data.total, page);
+                document.getElementById('searchResultsCount').textContent = `${data.total} результатов`;
+            } else {
+                document.getElementById('searchResults').innerHTML = '<div class="text-center text-muted py-4">Ничего не найдено</div>';
+                document.getElementById('searchPagination').classList.add('d-none');
+                document.getElementById('searchResultsCount').textContent = '0 результатов';
+            }
+        } catch (err) {
+            document.getElementById('searchResults').innerHTML = '<div class="text-center text-danger py-4">Ошибка поиска</div>';
+        }
+    }
+
+    function displaySearchResults(results, total, page) {
+        const container = document.getElementById('searchResults');
+        let html = '';
+        results.forEach(model => {
+            const dim = model.tags?.find(t => t.includes('dim'))?.replace('dim', '') || '?';
+            const isSelected = selectedModelId === model.id;
+            html += `
+                <div class="search-result-item ${isSelected ? 'selected' : ''}" data-model-id="${model.id}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div><strong>${model.name}</strong> <span class="text-muted">(${model.author})</span></div>
+                            <div class="small text-muted">${model.id}</div>
+                            <div class="mt-1">
+                                <span class="badge bg-secondary"><i class="bi bi-download"></i> ${formatNumber(model.downloads)}</span>
+                                <span class="badge bg-secondary ms-1"><i class="bi bi-vector"></i> ${dim}d</span>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm ${isSelected ? 'btn-success' : 'btn-outline-primary'} select-search-result-btn" data-model-id="${model.id}">
+                            ${isSelected ? '✓ Выбрана' : 'Выбрать'}
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+        attachSearchEvents();
+        setupPagination(total, page);
+    }
+
+    function attachSearchEvents() {
+        document.querySelectorAll('.search-result-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                if (e.target.closest('.select-search-result-btn')) return;
+                document.querySelectorAll('.search-result-item').forEach(i => i.classList.remove('selected'));
+                this.classList.add('selected');
+                selectModel(this.dataset.modelId);
+            });
+            const btn = item.querySelector('.select-search-result-btn');
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectModel(btn.dataset.modelId);
+                });
+            }
+        });
+    }
+
+    function setupPagination(total, page) {
+        totalPages = Math.ceil(total / 10);
+        if (totalPages <= 1) {
+            document.getElementById('searchPagination').classList.add('d-none');
+            return;
+        }
+        document.getElementById('searchPagination').classList.remove('d-none');
+        document.getElementById('pageInfo').textContent = `Страница ${page} из ${totalPages}`;
+        document.getElementById('prevPage').disabled = page <= 1;
+        document.getElementById('nextPage').disabled = page >= totalPages;
+        document.getElementById('prevPage').onclick = () => searchModels(currentSearchQuery, page - 1);
+        document.getElementById('nextPage').onclick = () => searchModels(currentSearchQuery, page + 1);
+    }
+
+    async function validateModel(modelId) {
+        const success = document.getElementById('validationSuccess');
+        const error = document.getElementById('validationError');
+        const loading = document.getElementById('validationLoading');
+        const detailsDiv = document.getElementById('modelDetails');
+        success.classList.add('d-none');
+        error.classList.add('d-none');
+        loading.classList.remove('d-none');
+        detailsDiv.classList.add('d-none');
+        try {
+            const resp = await fetch(`/api/huggingface/?action=validate_embedding&model_id=${encodeURIComponent(modelId)}`);
+            const data = await resp.json();
+            if (data.valid && data.exists) {
+                success.classList.remove('d-none');
+                detailsDiv.classList.remove('d-none');
+                detailsDiv.innerHTML = `
+                    <div class="model-detail-row"><span class="model-detail-label">Автор:</span><span class="model-detail-value">${data.author || '—'}</span></div>
+                    <div class="model-detail-row"><span class="model-detail-label">Загрузки:</span><span class="model-detail-value">${formatNumber(data.downloads)}</span></div>
+                    <div class="model-detail-row"><span class="model-detail-label">Размерность:</span><span class="model-detail-value">${data.dimension || '?'}</span></div>
+                    <div class="model-detail-row"><span class="model-detail-label">Лицензия:</span><span class="model-detail-value">${data.license || 'Не указана'}</span></div>
+                `;
+                autoFillModelData(modelId, data);
+                showToast('Модель найдена', `Модель "${modelId}" доступна`, 'success');
+            } else {
+                error.classList.remove('d-none');
+                showToast('Модель не найдена', `Модель "${modelId}" не найдена`, 'error');
+            }
+        } catch (err) {
+            error.classList.remove('d-none');
+            showToast('Ошибка', 'Не удалось проверить модель', 'error');
+        } finally {
+            loading.classList.add('d-none');
+        }
+    }
+
+    function autoFillModelData(modelId, data) {
+        const nameInput = document.getElementById('id_name');
+        if (!nameInput.value) nameInput.value = modelId.replace(/[\/.]/g, '_').toLowerCase();
+        const displayInput = document.getElementById('id_display_name');
+        if (!displayInput.value) displayInput.value = modelId;
+        const dimInput = document.getElementById('id_embedding_dim');
+        if (data.dimension && dimInput && !dimInput.value) dimInput.value = data.dimension;
+        const licenseInput = document.getElementById('id_license_type');
+        if (data.license && licenseInput && !licenseInput.value) licenseInput.value = data.license;
+    }
+
+    function selectModel(modelId) {
+        selectedModelId = modelId;
+        document.getElementById('id_model_id').value = modelId;
+        validateModel(modelId);
+        document.getElementById('id_model_id').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        showToast('Модель выбрана', `Модель "${modelId}" выбрана`, 'success');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('buttonSearch').addEventListener('click', () => {
+            const q = document.getElementById('modelSearchInput').value.trim();
+            if (q) searchModels(q, 1);
+            else showToast('Внимание', 'Введите запрос', 'warning');
+        });
+        document.getElementById('modelSearchInput').addEventListener('keypress', e => {
+            if (e.key === 'Enter') document.getElementById('buttonSearch').click();
+        });
+        document.getElementById('refreshTopModels').addEventListener('click', loadTopModels);
+        document.getElementById('validateModelBtn').addEventListener('click', () => {
+            const id = document.getElementById('id_model_id').value.trim();
+            if (id) validateModel(id);
+            else showToast('Внимание', 'Введите Hugging Face ID', 'warning');
+        });
+        loadTopModels();
+    });
+</script>
+{% endblock %}

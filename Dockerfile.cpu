@@ -1,0 +1,69 @@
+FROM ubuntu:24.04
+
+# Установка Python 3.13 (с повторными попытками при сбое PPA)
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    software-properties-common \
+    gpg \
+    ca-certificates \
+    curl \
+    && for i in 1 2 3; do \
+        add-apt-repository -y ppa:deadsnakes/ppa && break || sleep 5; \
+    done \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        python3.13 \
+        python3.13-dev \
+        python3.13-venv \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sS https://bootstrap.pypa.io/get-pip.py | python3.13
+
+# Системные зависимости (без CUDA)
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    gcc \
+    g++ \
+    curl \
+    git \
+    netcat-openbsd \
+    ca-certificates \
+    poppler-utils \
+    libmagic1 \
+    libfreetype6 \
+    libjpeg-turbo8 \
+    libopenjp2-7 \
+    libpng16-16 \
+    libtiff6 \
+    libxcb1 \
+    libxext6 \
+    libxrender1 \
+    cmake \
+    ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+ENV PIP_DEFAULT_TIMEOUT=6000 \
+    PIP_RETRIES=10
+
+RUN python3.13 -m venv /opt/venv
+ENV VIRTUAL_ENV="/opt/venv"
+ENV PATH="/opt/venv/bin:$PATH"
+
+RUN pip install uv
+
+ENV UV_HTTP_TIMEOUT=6000
+
+COPY requirements.in .
+
+RUN uv pip compile requirements.in --output-file requirements.txt && \
+    uv pip install -r requirements.txt
+
+# CPU версия PyTorch (без CUDA)
+RUN uv pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+
+COPY . .
+
+RUN echo '#!/bin/bash\nset -e\necho "=== Starting CPU service ==="\nexec "$@"\n' > /entrypoint.sh && chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

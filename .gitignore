@@ -1,0 +1,22 @@
+.env
+encryption_key.txt
+*.pyc
+__pycache__/
+media/
+static/
+logs/
+*.log
+*.db
+*.sqlite3
+*.pid
+docker_volumes/
+data/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.DS_Store
+# v2: модели-кэши и стейт beat
+app/.cache/
+.cache/
+celerybeat-schedule*

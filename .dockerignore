@@ -1,0 +1,29 @@
+# Модели и кэши (монтируются через тома)
+media/
+data/
+
+# Виртуальные окружения и кэш Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+*.egg
+
+# Docker и системные файлы
+.git/
+docker-compose.yml
+README.md
+*.md
+.env
+.env.*
+**/.env
+app/logs/
+**/*.log
+app/celerybeat-schedule*
+app/.cache/
+media/
+docker_volumes/
+__pycache__/
+**/__pycache__/
+.git/

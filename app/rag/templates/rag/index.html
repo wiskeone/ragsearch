@@ -1,0 +1,776 @@
+{% extends 'rag/base.html' %}
+{% load static %}
+
+{% block title %}Главная — RAG Search{% endblock %}
+
+{% block content %}
+{% if user.is_authenticated %}
+    <input type="hidden" id="totalDocumentsCount" value="{{ total_documents|default:0 }}">
+
+    <div class="chat-controls">
+        <button class="control-btn" data-bs-toggle="offcanvas" data-bs-target="#settingsPanel" title="Настройки">
+            <i class="bi bi-sliders2"></i>
+        </button>
+        <button class="control-btn" data-bs-toggle="modal" data-bs-target="#sessionsModal" title="Мои чаты">
+            <i class="bi bi-chat-square-text"></i>
+        </button>
+    </div>
+
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="settingsPanel" style="max-width: 320px; background: var(--surface-1);">
+        <div class="offcanvas-header border-bottom">
+            <h5 class="offcanvas-title fw-semibold"><i class="bi bi-sliders2 me-2"></i>Параметры</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+        </div>
+        <div class="offcanvas-body">
+            {% if collections %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Коллекция</label>
+                <div id="collectionList">
+                    {% for coll in collections %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="collection" value="{{ coll.id }}" id="coll{{ coll.id }}"
+                               {% if forloop.first %}checked{% endif %}>
+                        <label class="form-check-label" for="coll{{ coll.id }}">
+                            {{ coll.name }} ({{ coll.documents.count }})
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Модель LLM</label>
+                <select class="form-select" id="llmModelSelect">
+                    <option value="">Только поиск</option>
+                    {% for model in llm_models %}
+                    <option value="{{ model.id }}" {% if model.is_default %}selected{% endif %}>
+                        {{ model.display_name|default:model.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if embedding_models %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Модель эмбеддингов</label>
+                <select class="form-select" id="embeddingModelSelect">
+                    <option value="">По умолчанию</option>
+                    {% for model in embedding_models %}
+                    <option value="{{ model.id }}" {% if model.is_default %}selected{% endif %}>
+                        {{ model.display_name|default:model.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% endif %}
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Температура: <span id="tempDisplay">0.7</span></label>
+                <input type="range" class="form-range" min="0.1" max="1.5" step="0.1" value="0.7" id="temperatureSlider">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Макс. токенов: <span id="tokensDisplay">512</span></label>
+                <input type="range" class="form-range" min="100" max="2048" step="100" value="512" id="maxTokensSlider">
+            </div>
+            <div class="small text-secondary mt-2">
+                <i class="bi bi-files me-1"></i> Всего документов: {{ total_documents|default:0 }}
+            </div>
+            <a href="{% url 'rag:collection_list' %}" class="btn btn-outline-primary w-100 mt-2">
+                <i class="bi bi-folder-plus me-1"></i> Управление коллекциями
+            </a>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="bi bi-folder-x display-4 text-secondary"></i>
+                <p class="mt-3">Нет коллекций</p>
+                <a href="{% url 'rag:collection_list' %}" class="btn btn-primary">Создать коллекцию</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="home-chat" id="homeChat">
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-footer">
+            <div class="composer">
+                <textarea id="queryInput" rows="3" placeholder="Введите запрос или перетащите файлы..."></textarea>
+                <button class="send-btn" id="sendBtn" onclick="submitQuery()" disabled>
+                    <i class="bi bi-send-fill fs-5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <div class="text-center mt-5">
+        <i class="bi bi-search-heart display-1" style="color: var(--primary);"></i>
+        <h1 class="mt-3 fw-bold"><span class="bg-gradient-text">RAG Search</span></h1>
+        <p class="lead text-secondary">Интеллектуальный поиск по вашим документам с помощью ИИ</p>
+        <div class="d-flex gap-3 justify-content-center mt-4">
+            <a href="{% url 'rag:login' %}" class="btn btn-primary btn-lg px-4">Войти</a>
+            <a href="{% url 'rag:register' %}" class="btn btn-outline-primary btn-lg px-4">Регистрация</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block modals %}
+    <!-- Модалка списка чатов -->
+    <div class="modal fade" id="sessionsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-chat-square-text me-2"></i>Мои чаты</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="sessionsList"></div>
+                <div class="modal-footer">
+                    <button class="btn btn-outline-primary btn-sm" id="newChatBtn"><i class="bi bi-plus-lg me-1"></i> Новый чат</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка выбора коллекции для файлов -->
+    <div class="modal fade" id="selectCollectionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Выберите коллекцию</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Коллекция</label>
+                        <select class="form-select" id="existingCollectionSelect"></select>
+                        <button class="btn btn-link btn-sm mt-1" id="createNewCollectionBtn">+ Создать новую коллекцию</button>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Файлы для добавления</label>
+                        <div id="uploadingFilesList" class="file-attachments"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="addToCollectionBtn">Добавить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка создания коллекции с файлами -->
+    <div class="modal fade" id="createCollectionModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Создать коллекцию</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" class="form-control" id="newCollectionName" placeholder="Моя коллекция">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Стратегия разделения</label>
+                        <select class="form-select" id="chunkingStrategy">
+                            <option value="recursive">Рекурсивное (рекомендуется)</option>
+                            <option value="semantic">Семантическое</option>
+                            <option value="paragraph">По параграфам</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Файлы</label>
+                        <div id="newCollectionFilesList" class="file-attachments"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="createCollectionAndUploadBtn">Создать и загрузить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модалка деталей документа -->
+    <div class="modal fade" id="detailDocumentModal" tabindex="-1" aria-labelledby="detailDocModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-transparent">
+                    <h5 class="modal-title" id="detailDocModalTitle">Фрагменты документа</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="detailDocBody">
+                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+        <div id="liveToast" class="toast" role="alert" data-bs-autohide="true" data-bs-delay="3000">
+            <div class="toast-header bg-primary text-white">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong class="me-auto" id="toastTitle">Уведомление</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastMessage"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ================================================================
+    // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    // ================================================================
+    const chatMessages = document.getElementById('chatMessages');
+    const queryInput = document.getElementById('queryInput');
+    const sendBtn = document.getElementById('sendBtn');
+    let isProcessing = false;
+    let pendingFiles = [];
+    let currentSessionId = null;
+
+    function getCSRFToken() {
+        const cookie = document.cookie.split('; ').find(row => row.startsWith('csrftoken='));
+        return cookie ? cookie.split('=')[1] : '';
+    }
+
+    function escapeHtml(unsafe) {
+        return unsafe.replace(/[&<>"']/g, m => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+        }[m]));
+    }
+
+    function fadeInText(element, text) {
+        element.textContent = text;
+        element.style.opacity = '0';
+        element.style.transition = 'opacity 0.4s ease';
+        requestAnimationFrame(() => element.style.opacity = '1');
+    }
+
+    // ================================================================
+    // ОТОБРАЖЕНИЕ СООБЩЕНИЙ С ГРУППИРОВКОЙ (для LLM)
+    // ================================================================
+    function addMessage(role, content, files = [], sources = []) {
+        const div = document.createElement('div');
+        div.className = `chat-bubble ${role === 'user' ? 'bubble-user' : 'bubble-assistant'}`;
+        let html = `<div style="white-space:pre-wrap;">${escapeHtml(content)}</div>`;
+
+        if (files.length) {
+            html += '<div class="file-attachments">';
+            files.forEach(f => html += `<span class="file-chip"><i class="bi bi-file-earmark"></i> ${escapeHtml(f.name)} (${(f.size/1024).toFixed(1)} KB)</span>`);
+            html += '</div>';
+        }
+
+        if (sources.length) {
+            const grouped = {};
+            sources.forEach(src => {
+                const key = src.document_id;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        document_id: src.document_id,
+                        document_title: src.document_title,
+                        chunk_ids: [],
+                        count: 0
+                    };
+                }
+                grouped[key].chunk_ids.push(src.chunk_id);
+                grouped[key].count++;
+            });
+
+            html += '<div class="sources-inline mt-2">';
+            for (const g of Object.values(grouped)) {
+                const chunkIdsList = g.chunk_ids.join(',');
+                const displayTitle = g.count > 1 ? `${g.document_title} (${g.count} фрагмента)` : g.document_title;
+                html += `<span class="source-chip" onclick='openDocumentSources(${g.document_id}, "${escapeHtml(displayTitle)}", "${chunkIdsList}")'>${escapeHtml(displayTitle)}</span>`;
+            }
+            html += '</div>';
+        }
+
+        div.innerHTML = html;
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // ================================================================
+    // ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ ПОИСКА (карточки с подсветкой)
+    // ================================================================
+    function displaySearchResults(sources) {
+        if (!sources || sources.length === 0) {
+            addMessage('assistant', 'Ничего не найдено.');
+            return;
+        }
+        const container = document.createElement('div');
+        container.className = 'search-results-container';
+
+        for (const res of sources) {
+            const card = document.createElement('div');
+            card.className = 'search-result-card';
+            card.innerHTML = `
+                <div class="search-result-header">
+                    <strong>${escapeHtml(res.document_title)}</strong>
+                    <button class="btn btn-sm btn-link source-chip" onclick='openDocumentSources(${res.document_id}, "${escapeHtml(res.document_title)}", "${res.chunk_id}")'>
+                        <i class="bi bi-eye"></i> Просмотреть
+                    </button>
+                </div>
+                <div class="search-result-content">${res.content_highlighted}</div>
+            `;
+            container.appendChild(card);
+        }
+
+        const div = document.createElement('div');
+        div.className = 'chat-bubble bubble-assistant';
+        div.appendChild(container);
+        chatMessages.appendChild(div);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // ================================================================
+    // ОТКРЫТИЕ МОДАЛКИ СО ВСЕМИ ФРАГМЕНТАМИ (batch)
+    // ================================================================
+    async function openDocumentSources(documentId, documentTitle, chunkIdsStr) {
+        const modalBody = document.getElementById('detailDocBody');
+        if (!modalBody) return;
+        modalBody.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+
+        try {
+            const res = await fetch(`/api/chunks/batch/?ids=${chunkIdsStr}`);
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error);
+            const chunks = data.chunks;
+
+            let contentHtml = `
+                <div class="mb-3">
+                    <h6>Документ: ${escapeHtml(documentTitle)}</h6>
+                    <p class="text-muted small">Найдено фрагментов: ${chunks.length}</p>
+                </div>
+            `;
+
+            if (chunks.length === 1) {
+                contentHtml += `
+                    <div class="alert alert-light border rounded p-3" style="max-height: 60vh; overflow-y: auto;">
+                        <pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(chunks[0].content)}</pre>
+                    </div>
+                `;
+            } else {
+                let accordionHtml = '<div class="accordion" id="chunksAccordion">';
+                chunks.forEach((chunk, idx) => {
+                    const collapseId = `collapse${idx}`;
+                    const headerId = `heading${idx}`;
+                    accordionHtml += `
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="${headerId}">
+                                <button class="accordion-button ${idx !== 0 ? 'collapsed' : ''}" type="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="${idx === 0 ? 'true' : 'false'}" aria-controls="${collapseId}">
+                                    Фрагмент #${chunk.chunk_index}
+                                </button>
+                            </h2>
+                            <div id="${collapseId}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}" aria-labelledby="${headerId}" data-bs-parent="#chunksAccordion">
+                                <div class="accordion-body">
+                                    <pre style="white-space: pre-wrap; font-family: inherit;">${escapeHtml(chunk.content)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                accordionHtml += '</div>';
+                contentHtml += accordionHtml;
+            }
+
+            contentHtml += `
+                <div class="mt-3 text-end">
+                    <a href="/api/documents/${documentId}/download/" class="btn btn-sm btn-outline-primary me-2" target="_blank">
+                        <i class="bi bi-download"></i> Скачать документ
+                    </a>
+                    <a href="/api/documents/${documentId}/download/" class="btn btn-sm btn-outline-secondary" target="_blank">
+                        <i class="bi bi-eye"></i> Просмотреть документ
+                    </a>
+                </div>
+            `;
+
+            modalBody.innerHTML = contentHtml;
+            new bootstrap.Modal(document.getElementById('detailDocumentModal')).show();
+        } catch (err) {
+            console.error(err);
+            modalBody.innerHTML = `<div class="alert alert-danger">Не удалось загрузить фрагменты: ${err.message}</div>`;
+        }
+    }
+
+    // ================================================================
+    // ПРИВЕТСТВЕННОЕ СООБЩЕНИЕ
+    // ================================================================
+    function showWelcome() {
+        const hasCollections = {{ collections|yesno:"true,false" }};
+        const totalDocs = parseInt(document.getElementById('totalDocumentsCount')?.value || '0', 10);
+        let msg = '';
+        if (!hasCollections) {
+            msg = 'Привет! Я помогу найти ответы в твоих документах. Чтобы начать, перетащи файлы прямо сюда (PDF, DOCX, TXT …) или создай коллекцию в боковом меню.';
+        } else {
+            if (totalDocs > 0) {
+                msg = 'Всё готово! Задай вопрос, и я найду ответ в твоих документах. А если хочешь добавить новые файлы – просто перетащи их сюда.';
+            } else {
+                msg = 'У тебя уже есть коллекции, но они пусты. Перетащи файлы в чат, чтобы наполнить их, или задай вопрос – я поищу среди уже загруженных документов.';
+            }
+        }
+        const welcomeDiv = document.createElement('div');
+        welcomeDiv.className = 'welcome-message';
+        welcomeDiv.id = 'welcomeMessage';
+        chatMessages.appendChild(welcomeDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        requestAnimationFrame(() => welcomeDiv.classList.add('visible'));
+        fadeInText(welcomeDiv, msg);
+    }
+
+    // ================================================================
+    // DRAG & DROP
+    // ================================================================
+    const homeChat = document.getElementById('homeChat');
+    homeChat.addEventListener('dragover', e => { e.preventDefault(); homeChat.classList.add('drop-active'); });
+    homeChat.addEventListener('dragleave', () => homeChat.classList.remove('drop-active'));
+    homeChat.addEventListener('drop', e => {
+        e.preventDefault();
+        homeChat.classList.remove('drop-active');
+        const files = Array.from(e.dataTransfer.files);
+        if (!files.length) return;
+        const allowed = ['.pdf','.docx','.xlsx','.pptx','.epub','.odt','.rtf','.html','.md','.txt','.csv'];
+        const invalid = files.filter(f => !allowed.includes('.' + f.name.split('.').pop().toLowerCase()));
+        if (invalid.length) {
+            const names = invalid.map(f => '.' + f.name.split('.').pop()).join(', ');
+            addMessage('assistant', `Формат файла ${names} не поддерживается. Поддерживаемые: PDF, DOCX, XLSX, PPTX, EPUB, ODT, RTF, HTML, Markdown, TXT, CSV.`);
+            return;
+        }
+        pendingFiles = files;
+        queryInput.value = '';
+        sendBtn.disabled = true;
+        showCollectionModal(files);
+    });
+
+    // ================================================================
+    // ОТПРАВКА ЗАПРОСА (АСИНХРОННЫЙ ЧАТ + ПОИСК)
+    // ================================================================
+    queryInput.addEventListener('input', () => {
+        sendBtn.disabled = queryInput.value.trim().length === 0;
+    });
+    queryInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (!sendBtn.disabled) submitQuery();
+        }
+    });
+
+    async function submitQuery() {
+        if (isProcessing) return;
+        const text = queryInput.value.trim();
+        if (!text) return;
+        isProcessing = true;
+        sendBtn.disabled = true;
+        const query = text;
+        queryInput.value = '';
+        addMessage('user', query);
+        await sendQuery(query);
+        isProcessing = false;
+        sendBtn.disabled = true;
+        queryInput.focus();
+    }
+
+    async function sendQuery(query) {
+        const collectionRadio = document.querySelector('input[name="collection"]:checked');
+        const collectionId = collectionRadio ? collectionRadio.value : null;
+        if (!collectionId) {
+            addMessage('assistant', 'Пожалуйста, выберите коллекцию в боковом меню.');
+            return;
+        }
+        const temperature = parseFloat(document.getElementById('temperatureSlider').value);
+        const maxTokens = parseInt(document.getElementById('maxTokensSlider').value);
+        const llmId = document.getElementById('llmModelSelect').value;
+        const embModelSelect = document.getElementById('embeddingModelSelect');
+        const embModelId = embModelSelect ? embModelSelect.value : null;
+
+        const body = {
+            query,
+            collection_id: parseInt(collectionId),
+            llm_model_id: llmId || null,
+            embedding_model_id: embModelId || null,
+            temperature,
+            max_tokens: maxTokens,
+            session_id: currentSessionId
+        };
+
+        const typing = document.createElement('div');
+        typing.className = 'typing-indicator';
+        typing.innerHTML = '<span></span><span></span><span></span>';
+        typing.id = 'typingIndicator';
+        chatMessages.appendChild(typing);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+        try {
+            const response = await fetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Ошибка запроса');
+            if (data.is_search_result) {
+                document.getElementById('typingIndicator')?.remove();
+                displaySearchResults(data.sources);
+            } else if (data.task_id) {
+                pollForResult(data.task_id);
+            } else if (data.answer) {
+                document.getElementById('typingIndicator')?.remove();
+                addMessage('assistant', data.answer, [], data.sources || []);
+            } else {
+                throw new Error('Неожиданный ответ от сервера');
+            }
+        } catch (err) {
+            document.getElementById('typingIndicator')?.remove();
+            console.error(err);
+            addMessage('assistant', '⚠️ Не удалось выполнить запрос. Попробуйте позже.');
+        }
+    }
+
+    function pollForResult(taskId) {
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/chat/result/${taskId}/`);
+                const data = await res.json();
+                if (data.ready === true) {
+                    clearInterval(interval);
+                    document.getElementById('typingIndicator')?.remove();
+                    addMessage('assistant', data.answer, [], data.sources || []);
+                }
+            } catch (err) {
+                console.error('Polling error:', err);
+            }
+        }, 1000);
+    }
+
+    // ================================================================
+    // УПРАВЛЕНИЕ СЕССИЯМИ
+    // ================================================================
+    async function initChatSession() {
+        try {
+            const sessionsRes = await fetch('/api/chat/sessions/');
+            if (!sessionsRes.ok) throw new Error('Failed to fetch sessions');
+            const sessionsData = await sessionsRes.json();
+            if (sessionsData.success && sessionsData.sessions && sessionsData.sessions.length > 0) {
+                const lastSession = sessionsData.sessions[0];
+                currentSessionId = lastSession.session_id;
+                const historyRes = await fetch(`/api/chat/session/${currentSessionId}/history/`);
+                if (historyRes.ok) {
+                    const historyData = await historyRes.json();
+                    if (historyData.success) {
+                        chatMessages.innerHTML = '';
+                        historyData.history.forEach(msg => {
+                            addMessage(msg.role, msg.content, [], msg.metadata?.sources || []);
+                        });
+                    }
+                }
+            } else {
+                await createNewSession();
+            }
+        } catch (err) {
+            console.error('Failed to init chat session', err);
+            await createNewSession();
+        }
+    }
+
+    async function createNewSession() {
+        try {
+            const createRes = await fetch('/api/chat/session/create/', { method: 'POST', headers: { 'X-CSRFToken': getCSRFToken() } });
+            const createData = await createRes.json();
+            if (createData.success) {
+                currentSessionId = createData.session_id;
+                chatMessages.innerHTML = '';
+                showWelcome();
+            } else {
+                console.error('Failed to create session', createData);
+                addMessage('assistant', '⚠️ Не удалось создать сессию чата. Перезагрузите страницу.');
+            }
+        } catch (err) {
+            console.error('Cannot create session', err);
+            addMessage('assistant', '⚠️ Ошибка соединения. Проверьте сервер.');
+        }
+    }
+
+    async function loadChatSession(sessionId) {
+        try {
+            const historyRes = await fetch(`/api/chat/session/${sessionId}/history/`);
+            if (!historyRes.ok) throw new Error('Failed to load history');
+            const historyData = await historyRes.json();
+            if (historyData.success) {
+                chatMessages.innerHTML = '';
+                currentSessionId = sessionId;
+                historyData.history.forEach(msg => {
+                    addMessage(msg.role, msg.content, [], msg.metadata?.sources || []);
+                });
+                const modal = bootstrap.Modal.getInstance(document.getElementById('sessionsModal'));
+                if (modal) modal.hide();
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Не удалось загрузить историю');
+        }
+    }
+
+    async function refreshSessionsList() {
+        const listContainer = document.getElementById('sessionsList');
+        if (!listContainer) return;
+        try {
+            const res = await fetch('/api/chat/sessions/');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success && data.sessions) {
+                    listContainer.innerHTML = '';
+                    data.sessions.forEach(s => {
+                        const btn = document.createElement('button');
+                        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                        btn.innerHTML = `<span>${escapeHtml(s.title)}</span><small class="text-muted">${new Date(s.last_activity).toLocaleString()}</small>`;
+                        btn.onclick = () => loadChatSession(s.session_id);
+                        listContainer.appendChild(btn);
+                    });
+                }
+            }
+        } catch (err) {
+            console.error(err);
+        }
+    }
+
+    // ================================================================
+    // МОДАЛЬНЫЕ ОКНА ДЛЯ ФАЙЛОВ И КОЛЛЕКЦИЙ
+    // ================================================================
+    async function safeShowModal(selector) {
+        document.querySelectorAll('.modal.show').forEach(el => bootstrap.Modal.getInstance(el)?.hide());
+        await new Promise(r => setTimeout(r, 350));
+        document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
+        bootstrap.Modal.getOrCreateInstance(document.querySelector(selector)).show();
+    }
+
+    async function showCollectionModal(files) {
+        const resp = await fetch('/api/user/rag-collections/');
+        const data = await resp.json();
+        const collections = data.collections || [];
+        if (collections.length === 0) {
+            renderFileList(files, 'newCollectionFilesList');
+            await safeShowModal('#createCollectionModal');
+        } else {
+            const select = document.getElementById('existingCollectionSelect');
+            select.innerHTML = '';
+            collections.forEach(c => select.appendChild(new Option(`${c.name} (${c.doc_count} документов)`, c.id)));
+            renderFileList(files, 'uploadingFilesList');
+            await safeShowModal('#selectCollectionModal');
+        }
+    }
+
+    function renderFileList(files, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        files.forEach(f => {
+            const chip = document.createElement('span');
+            chip.className = 'file-chip';
+            chip.innerHTML = `<i class="bi bi-file-earmark"></i> ${escapeHtml(f.name)} (${(f.size/1024).toFixed(1)} KB)`;
+            container.appendChild(chip);
+        });
+    }
+
+    async function uploadFilesToCollection(collectionId, files) {
+        if (!files || files.length === 0) throw new Error('Нет файлов для загрузки');
+        const formData = new FormData();
+        formData.append('collection', collectionId);
+        formData.append('csrfmiddlewaretoken', getCSRFToken());
+        files.forEach(f => formData.append('files', f));
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/api/documents/upload/', true);
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.success) resolve(data);
+                        else reject(new Error(data.error || 'Ошибка сервера'));
+                    } catch (e) { reject(new Error('Некорректный ответ сервера')); }
+                } else {
+                    let msg = `Ошибка ${xhr.status}`;
+                    try {
+                        const err = JSON.parse(xhr.responseText);
+                        msg = err.error || msg;
+                        if (err.errors) msg += ': ' + JSON.stringify(err.errors);
+                    } catch (e) {}
+                    reject(new Error(msg));
+                }
+            };
+            xhr.onerror = () => reject(new Error('Сетевая ошибка'));
+            xhr.send(formData);
+        });
+    }
+
+    document.getElementById('addToCollectionBtn')?.addEventListener('click', async () => {
+        const collectionId = document.getElementById('existingCollectionSelect').value;
+        if (!collectionId) return;
+        const filesToUpload = [...pendingFiles];
+        if (!filesToUpload.length) { alert('Нет файлов для загрузки'); return; }
+        try {
+            await uploadFilesToCollection(collectionId, filesToUpload);
+            bootstrap.Modal.getInstance(document.querySelector('#selectCollectionModal')).hide();
+            pendingFiles = [];
+            addMessage('assistant', `Файлы (${filesToUpload.length} шт.) успешно добавлены в коллекцию.`);
+        } catch (err) { alert(err.message); }
+    });
+
+    document.getElementById('createNewCollectionBtn')?.addEventListener('click', () => {
+        bootstrap.Modal.getInstance(document.querySelector('#selectCollectionModal')).hide();
+        renderFileList(pendingFiles, 'newCollectionFilesList');
+        safeShowModal('#createCollectionModal');
+    });
+
+    document.getElementById('createCollectionAndUploadBtn')?.addEventListener('click', async () => {
+        const name = document.getElementById('newCollectionName').value || 'Моя коллекция';
+        const strategy = document.getElementById('chunkingStrategy').value || 'recursive';
+        const filesToUpload = [...pendingFiles];
+        if (!filesToUpload.length) { alert('Нет файлов для загрузки'); return; }
+        try {
+            const createResp = await fetch('/api/collections/create/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() },
+                body: JSON.stringify({ name, chunking_strategy: strategy })
+            });
+            if (!createResp.ok) throw new Error('Ошибка создания коллекции');
+            const createData = await createResp.json();
+            if (!createData.success) throw new Error(createData.error || 'Ошибка');
+            const newCollId = createData.collection_id || createData.id;
+            if (!newCollId) throw new Error('Не получен ID коллекции');
+            await uploadFilesToCollection(newCollId, filesToUpload);
+            bootstrap.Modal.getInstance(document.querySelector('#createCollectionModal')).hide();
+            pendingFiles = [];
+            addMessage('assistant', `Коллекция "${name}" создана, файлы добавлены.`);
+            setTimeout(() => location.reload(), 1500);
+        } catch (err) { alert(err.message); }
+    });
+
+    // ================================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+        initChatSession();
+        const sessionsModal = document.getElementById('sessionsModal');
+        if (sessionsModal) {
+            sessionsModal.addEventListener('show.bs.modal', refreshSessionsList);
+        }
+        document.getElementById('newChatBtn')?.addEventListener('click', async () => {
+            await createNewSession();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('sessionsModal'));
+            if (modal) modal.hide();
+        });
+        const tempSlider = document.getElementById('temperatureSlider');
+        const tempDisplay = document.getElementById('tempDisplay');
+        const tokensSlider = document.getElementById('maxTokensSlider');
+        const tokensDisplay = document.getElementById('tokensDisplay');
+        if (tempSlider && tempDisplay) {
+            tempSlider.addEventListener('input', () => tempDisplay.innerText = tempSlider.value);
+        }
+        if (tokensSlider && tokensDisplay) {
+            tokensSlider.addEventListener('input', () => tokensDisplay.innerText = tokensSlider.value);
+        }
+        showWelcome();
+    });
+</script>
+{% endblock extra_js %}
