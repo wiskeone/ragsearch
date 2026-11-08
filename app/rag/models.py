@@ -262,6 +262,7 @@ class Document(models.Model):
     description = models.TextField(blank=True)
     tags = models.JSONField(default=list, blank=True)
     file_encrypted_path = models.CharField(max_length=1000)
+    content_hash = models.CharField(max_length=64, blank=True, help_text='SHA-256 decrypted content (incremental indexing)')
     file_size_mb = models.FloatField(default=0.0)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='uploaded')
     error_message = models.TextField(blank=True)

@@ -160,6 +160,13 @@ TRIAL_MAX_DOCUMENTS = int(os.getenv('TRIAL_MAX_DOCUMENTS', 50))
 TRIAL_MAX_COLLECTIONS = int(os.getenv('TRIAL_MAX_COLLECTIONS', 5))
 TRIAL_MAX_STORAGE_MB = int(os.getenv("TRIAL_MAX_STORAGE_MB", "500"))
 
+# v3.x: реранкер (None = выключен)
+RERANKER_MODEL = os.getenv('RERANKER_MODEL', '')
+# v3.x: vLLM (опциональный инференс-бэкенд)
+VLLM_BASE_URL = os.getenv('VLLM_BASE_URL', 'http://vllm:8001/v1')
+VLLM_API_KEY = os.getenv('VLLM_API_KEY', '')
+VLLM_TIMEOUT = int(os.getenv('VLLM_TIMEOUT', '300'))
+
 HF_ENDPOINT = os.getenv('HF_ENDPOINT', 'https://hf-mirror.com')
 os.environ['HF_ENDPOINT'] = HF_ENDPOINT
 

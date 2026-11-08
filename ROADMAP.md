@@ -21,11 +21,11 @@ Working plan for future releases. Order is approximate — items move up if some
 
 ## v3.x — capabilities
 
-- [ ] **Reranker service** — cross-encoder reranking as an optional Celery stage
-- [ ] **Incremental indexing** — re-embed only changed documents
+- [x] **Reranker service** — `services/reranker.py`: cross-encoder (BAAI/bge-reranker-v2-m3), ленивая загрузка, активация через RERANKER_MODEL (v3.x)
+- [x] **Incremental indexing** — SHA-256 content hash on Document, skip unchanged on reindex (v3.x)
 - [ ] **Multi-model collections** — per-collection embedding model switch with transparent re-index
-- [ ] **vLLM integration** — optional inference backend (OpenAI-compatible) alongside transformers
-- [ ] **Metrics catalog** — Grafana dashboards shipped as provisioned JSON
+- [x] **vLLM integration** — `services/vllm_client.py` (OpenAI-compatible), settings VLLM_BASE_URL (v3.x)
+- [x] **Metrics catalog** — Grafana dashboard shipped as provisioned JSON (grafana/provisioning/dashboards/)
 
 ---
 

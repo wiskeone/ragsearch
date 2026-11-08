@@ -108,6 +108,16 @@ def process_document_task(self, document_id):
         finally:
             os.unlink(tmp_path)
 
+        # v3.x: инкрементальная индексация — если контент не изменился,
+        # пропускаем чанкирование/эмбеддинги/FAISS (документ уже indexed)
+        import hashlib
+        content_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        if doc.content_hash == content_hash and doc.status == 'processed':
+            logger.info(f"[SKIP] Document {document_id}: content unchanged (hash match)")
+            return {'success': True, 'skipped': True, 'reason': 'content_unchanged'}
+        doc.content_hash = content_hash
+        doc.save(update_fields=['content_hash'])
+
         if not text or not text.strip():
             raise ValueError("No extractable text found")
 
