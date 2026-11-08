@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
+from django.views.i18n import set_language
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_yasg.views import get_schema_view
@@ -26,6 +27,7 @@ urlpatterns = [
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('health/', health_check, name='health_check'),
+    path('i18n/setlang/', set_language, name='set_language'),
     # FIX: был ещё path('api/', include(...)) — все маршруты rag.urls и так
     # начинаются с 'api/', двойное подключение порождало /api/api/search/ и т.п.
     path('', include('rag.urls')),

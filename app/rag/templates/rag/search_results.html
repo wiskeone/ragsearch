@@ -1,7 +1,8 @@
 {% extends 'rag/base.html' %}
+{% load i18n %}
 {% block content %}
 <h2>Результаты поиска: "{{ query }}"</h2>
-<p>Коллекция: <strong>{{ collection.name }}</strong></p>
+<p>{% trans "Коллекция:" %} <strong>{{ collection.name }}</strong></p>
 {% if results %}
     <div class="list-group">
     {% for r in results %}
@@ -11,12 +12,12 @@
                 <span class="badge bg-primary">Score: {{ r.score|floatformat:3 }}</span>
             </div>
             <p>{{ r.content|truncatewords:50 }}</p>
-            <small><a href="{% url 'rag:document_detail' r.document_id %}">Подробнее</a></small>
+            <small><a href="{% url 'rag:document_detail' r.document_id %}">{% trans "Подробнее" %}</a></small>
         </div>
     {% endfor %}
     </div>
 {% else %}
-    <p>Ничего не найдено.</p>
+    <p>{% trans "Ничего не найдено." %}</p>
 {% endif %}
-<a href="{% url 'rag:search' %}" class="btn btn-secondary mt-3">Новый поиск</a>
+<a href="{% url 'rag:search' %}" class="btn btn-secondary mt-3">{% trans "Новый поиск" %}</a>
 {% endblock %}

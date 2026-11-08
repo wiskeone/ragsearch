@@ -1,0 +1,382 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: ragsearch\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "+ Создать новую коллекцию"
+msgstr "+ Create new collection"
+
+msgid "-- По умолчанию --"
+msgstr "-- Default --"
+
+msgid "LLM модели"
+msgstr "LLM models"
+
+msgid "LLM модель для чата"
+msgstr "LLM model for chat"
+
+msgid "« Первая"
+msgstr "« First"
+
+msgid "Автоматическая обработка"
+msgstr "Automatic processing"
+
+msgid "В обработке"
+msgstr "Processing"
+
+msgid "В этой коллекции пока нет документов."
+msgstr "No documents in this collection yet."
+
+msgid "Введите запрос или перетащите файлы..."
+msgstr "Enter a query or drag files here..."
+
+msgid "Визуализация разделения на чанки"
+msgstr "Chunking visualization"
+
+msgid "Войти"
+msgstr "Sign in"
+
+msgid "Вход в систему"
+msgstr "Sign in"
+
+msgid "Выберите коллекцию"
+msgstr "Select a collection"
+
+msgid "Выйти"
+msgstr "Sign out"
+
+msgid "Главная"
+msgstr "Home"
+
+msgid "Дайте коллекции понятное название"
+msgstr "Give the collection a clear name"
+
+msgid "Дата"
+msgstr "Date"
+
+msgid "Детали документа"
+msgstr "Document details"
+
+msgid "Детали коллекции"
+msgstr "Collection details"
+
+msgid "Детальные настройки"
+msgstr "Advanced settings"
+
+msgid "Добавить"
+msgstr "Add"
+
+msgid "Документы"
+msgstr "Documents"
+
+msgid "Документы коллекции"
+msgstr "Collection documents"
+
+msgid "Загружен"
+msgstr "Uploaded"
+
+msgid "Загрузить"
+msgstr "Upload"
+
+msgid "Загрузить документ"
+msgstr "Upload document"
+
+msgid "Загрузка документов"
+msgstr "Uploading documents"
+
+msgid "Закрыть"
+msgstr "Close"
+
+msgid "Зарегистрироваться"
+msgstr "Sign up"
+
+msgid "Интеллектуальный поиск по вашим документам с помощью ИИ"
+msgstr "AI-powered smart search across your documents"
+
+msgid "Коллекции"
+msgstr "Collections"
+
+msgid "Коллекция"
+msgstr "Collection"
+
+msgid "Коллекция:"
+msgstr "Collection:"
+
+msgid "Макс. токенов:"
+msgstr "Max tokens:"
+
+msgid "Место работы"
+msgstr "Workplace"
+
+msgid "Модели"
+msgstr "Models"
+
+msgid "Модель LLM"
+msgstr "LLM model"
+
+msgid "Модель эмбеддингов"
+msgstr "Embedding model"
+
+msgid "Мои коллекции"
+msgstr "My collections"
+
+msgid "Мои модели"
+msgstr "My models"
+
+msgid "Мои чаты"
+msgstr "My chats"
+
+msgid "Моя коллекция"
+msgstr "My collection"
+
+msgid "Название"
+msgstr "Name"
+
+msgid "Настройки"
+msgstr "Settings"
+
+msgid "Не удалось загрузить форму загрузки"
+msgstr "Failed to load the upload form"
+
+msgid "Нет коллекций"
+msgstr "No collections"
+
+msgid "Нет коллекций. Создайте первую."
+msgstr "No collections yet. Create the first one."
+
+msgid "Нет описания"
+msgstr "No description"
+
+msgid "Ничего не найдено."
+msgstr "Nothing found."
+
+msgid "Новая коллекция"
+msgstr "New collection"
+
+msgid "Новый поиск"
+msgstr "New search"
+
+msgid "Новый чат"
+msgstr "New chat"
+
+msgid "Обработан"
+msgstr "Processed"
+
+msgid "Общий заголовок (опционально)"
+msgstr "General title (optional)"
+
+msgid "Описание"
+msgstr "Description"
+
+msgid "Опишите назначение и содержание"
+msgstr "Describe the purpose and content"
+
+msgid "Оригинальное имя"
+msgstr "Original name"
+
+msgid "Основная информация"
+msgstr "Basic information"
+
+msgid "Отмена"
+msgstr "Cancel"
+
+msgid "Ошибка"
+msgstr "Error"
+
+msgid "Ошибка загрузки деталей"
+msgstr "Failed to load details"
+
+msgid "Ошибка загрузки списка документов"
+msgstr "Failed to load the document list"
+
+msgid "Ошибка загрузки формы"
+msgstr "Failed to load the form"
+
+msgid "Параметры"
+msgstr "Parameters"
+
+msgid "Перекрытие (20%)"
+msgstr "Overlap (20%)"
+
+msgid ""
+"Перекрытие помогает сохранять контекст между фрагментами. Рекомендуется "
+"10-20% от размера чанка."
+msgstr ""
+"Overlap helps preserve context between chunks. 10–20% of the chunk size is "
+"recommended."
+
+msgid "Перекрытие:"
+msgstr "Overlap:"
+
+msgid "Перестроить индекс"
+msgstr "Rebuild index"
+
+msgid "Перетащите файлы сюда"
+msgstr "Drop files here"
+
+msgid "По абзацам"
+msgstr "By paragraphs"
+
+msgid "По параграфам"
+msgstr "By paragraphs"
+
+msgid "По смыслу"
+msgstr "By meaning"
+
+msgid "По структуре документа"
+msgstr "By document structure"
+
+msgid "По умолчанию"
+msgstr "Default"
+
+msgid "Поддерживаются PDF, DOCX, TXT, MD"
+msgstr "PDF, DOCX, TXT, MD are supported"
+
+msgid "Подробнее"
+msgstr "Details"
+
+msgid "Последняя »"
+msgstr "Last »"
+
+msgid "Предыдущая"
+msgstr "Previous"
+
+msgid "Просмотреть"
+msgstr "View"
+
+msgid "Просмотреть документ"
+msgstr "View document"
+
+msgid "Профиль"
+msgstr "Profile"
+
+msgid "Публичная"
+msgstr "Public"
+
+msgid "Публичная коллекция"
+msgstr "Public collection"
+
+msgid "Размер"
+msgstr "Size"
+
+msgid "Размер чанка:"
+msgstr "Chunk size:"
+
+msgid "Регистрация"
+msgstr "Sign up"
+
+msgid "Редактирование документа"
+msgstr "Edit document"
+
+msgid "Редактировать"
+msgstr "Edit"
+
+msgid "Рекурсивное"
+msgstr "Recursive"
+
+msgid "Рекурсивное (рекомендуется)"
+msgstr "Recursive (recommended)"
+
+msgid "Свои настройки"
+msgstr "Custom settings"
+
+msgid "Семантическое"
+msgstr "Semantic"
+
+msgid "Скачать"
+msgstr "Download"
+
+msgid "Скачать документ"
+msgstr "Download document"
+
+msgid "Следующая"
+msgstr "Next"
+
+msgid "Создание коллекции"
+msgstr "Create collection"
+
+msgid "Создать и добавить документы"
+msgstr "Create and add documents"
+
+msgid "Создать и загрузить"
+msgstr "Create and upload"
+
+msgid "Создать коллекцию"
+msgstr "Create collection"
+
+msgid "Создать первую коллекцию"
+msgstr "Create the first collection"
+
+msgid "Сохранить"
+msgstr "Save"
+
+msgid "Сохранить и добавить документы"
+msgstr "Save and add documents"
+
+msgid "Статус"
+msgstr "Status"
+
+msgid "Стратегия разделения"
+msgstr "Splitting strategy"
+
+msgid "Стратегия разделения на чанки"
+msgstr "Chunking strategy"
+
+msgid "Теги"
+msgstr "Tags"
+
+msgid "Теги (через запятую)"
+msgstr "Tags (comma-separated)"
+
+msgid "Температура:"
+msgstr "Temperature:"
+
+msgid "Токен для доступа к закрытым моделям"
+msgstr "Token for accessing gated models"
+
+msgid "Только поиск"
+msgstr "Search only"
+
+msgid "У вас пока нет коллекций."
+msgstr "You have no collections yet."
+
+msgid "Уведомление"
+msgstr "Notification"
+
+msgid "Удалить"
+msgstr "Delete"
+
+msgid "Уже есть аккаунт?"
+msgstr "Already have an account?"
+
+msgid "Управление коллекциями"
+msgstr "Manage collections"
+
+msgid "Файлы"
+msgstr "Files"
+
+msgid "Файлы для добавления"
+msgstr "Files to add"
+
+msgid "Фрагменты документа"
+msgstr "Document chunks"
+
+msgid "Чанк 1"
+msgstr "Chunk 1"
+
+msgid "Чанк 2"
+msgstr "Chunk 2"
+
+msgid "Чанки ещё не созданы или документ не обработан."
+msgstr "Chunks are not created yet, or the document has not been processed."
+
+msgid "Эмбеддинги"
+msgstr "Embeddings"
+
+msgid "или нажмите для выбора"
+msgstr "or click to browse"

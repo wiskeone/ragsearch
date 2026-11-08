@@ -1,4 +1,5 @@
 {% extends 'rag/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block extra_css %}
@@ -46,9 +47,9 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
-    <h2 class="fw-semibold">Мои коллекции</h2>
+    <h2 class="fw-semibold">{% trans "Мои коллекции" %}</h2>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#collectionModal" id="createCollectionBtn">
-        <i class="bi bi-plus-lg me-1"></i> Создать коллекцию
+        <i class="bi bi-plus-lg me-1"></i> {% trans "Создать коллекцию" %}
     </button>
 </div>
 
@@ -62,10 +63,10 @@
                         <a href="#" class="text-decoration-none collection-detail-link" data-id="{{ collection.id }}" data-bs-toggle="modal" data-bs-target="#detailCollectionModal">{{ collection.name }}</a>
                     </h5>
                     <div class="btn-group">
-                        <button class="btn btn-sm edit-collection" data-id="{{ collection.id }}" title="Редактировать" data-bs-toggle="modal" data-bs-target="#collectionModal">
+                        <button class="btn btn-sm edit-collection" data-id="{{ collection.id }}" title="{% trans 'Редактировать' %}" data-bs-toggle="modal" data-bs-target="#collectionModal">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm delete-collection" data-id="{{ collection.id }}" data-name="{{ collection.name }}" title="Удалить">
+                        <button class="btn btn-sm delete-collection" data-id="{{ collection.id }}" data-name="{{ collection.name }}" title="{% trans 'Удалить' %}">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
@@ -73,7 +74,7 @@
                 {% if collection.description %}
                 <p class="card-text text-secondary small">{{ collection.description|truncatewords:20 }}</p>
                 {% else %}
-                <p class="card-text text-secondary small fst-italic">Нет описания</p>
+                <p class="card-text text-secondary small fst-italic">{% trans "Нет описания" %}</p>
                 {% endif %}
                 <div class="mt-2">
                     <span class="badge bg-primary-soft text-primary me-1">
@@ -81,7 +82,7 @@
                     </span>
                     {% if collection.is_public %}
                     <span class="badge bg-secondary-soft text-secondary">
-                        <i class="bi bi-globe"></i> Публичная
+                        <i class="bi bi-globe"></i> {% trans "Публичная" %}
                     </span>
                     {% endif %}
                 </div>
@@ -92,9 +93,9 @@
                 </div>
                 <div class="mt-3 d-flex gap-2">
                     <button class="btn btn-sm flex-grow-1 documents-collection" data-id="{{ collection.id }}" data-bs-toggle="modal" data-bs-target="#documentsModal">
-                        <i class="bi bi-files me-1"></i> Документы
+                        <i class="bi bi-files me-1"></i> {% trans "Документы" %}
                     </button>
-                    <button class="btn btn-sm reindex-collection" data-id="{{ collection.id }}" title="Перестроить индекс">
+                    <button class="btn btn-sm reindex-collection" data-id="{{ collection.id }}" title="{% trans 'Перестроить индекс' %}">
                         <i class="bi bi-arrow-repeat"></i>
                     </button>
                 </div>
@@ -109,8 +110,8 @@
         <div class="card shadow-sm">
             <div class="card-body text-center py-5">
                 <i class="bi bi-folder-x fs-1 text-secondary"></i>
-                <p class="mt-3 mb-0">У вас пока нет коллекций.</p>
-                <button type="button" class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#collectionModal" id="createEmptyBtn">Создать первую коллекцию</button>
+                <p class="mt-3 mb-0">{% trans "У вас пока нет коллекций." %}</p>
+                <button type="button" class="btn btn-outline-primary mt-3" data-bs-toggle="modal" data-bs-target="#collectionModal" id="createEmptyBtn">{% trans "Создать первую коллекцию" %}</button>
             </div>
         </div>
     </div>
@@ -121,13 +122,13 @@
 <nav class="mt-4">
     <ul class="pagination justify-content-center">
         {% if collections.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page=1">« Первая</a></li>
-        <li class="page-item"><a class="page-link" href="?page={{ collections.previous_page_number }}">Предыдущая</a></li>
+        <li class="page-item"><a class="page-link" href="?page=1">{% trans "« Первая" %}</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ collections.previous_page_number }}">{% trans "Предыдущая" %}</a></li>
         {% endif %}
         <li class="page-item active"><span class="page-link">{{ collections.number }}</span></li>
         {% if collections.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ collections.next_page_number }}">Следующая</a></li>
-        <li class="page-item"><a class="page-link" href="?page={{ collections.paginator.num_pages }}">Последняя »</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ collections.next_page_number }}">{% trans "Следующая" %}</a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ collections.paginator.num_pages }}">{% trans "Последняя »" %}</a></li>
         {% endif %}
     </ul>
 </nav>
@@ -140,7 +141,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="modalTitle">Создание коллекции</h5>
+                <h5 class="modal-title" id="modalTitle">{% trans "Создание коллекции" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modalBody">
@@ -155,7 +156,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="detailModalTitle">Детали коллекции</h5>
+                <h5 class="modal-title" id="detailModalTitle">{% trans "Детали коллекции" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="detailBody">
@@ -170,7 +171,7 @@
     <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="documentsModalTitle">Документы коллекции</h5>
+                <h5 class="modal-title" id="documentsModalTitle">{% trans "Документы коллекции" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="documentsBody">
@@ -185,7 +186,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="uploadModalTitle">Загрузка документов</h5>
+                <h5 class="modal-title" id="uploadModalTitle">{% trans "Загрузка документов" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="uploadBody">
@@ -200,7 +201,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="editDocModalTitle">Редактирование документа</h5>
+                <h5 class="modal-title" id="editDocModalTitle">{% trans "Редактирование документа" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="editDocBody">
@@ -215,7 +216,7 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-transparent">
-                <h5 class="modal-title" id="detailDocModalTitle">Детали документа</h5>
+                <h5 class="modal-title" id="detailDocModalTitle">{% trans "Детали документа" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="detailDocBody">
@@ -230,7 +231,7 @@
     <div id="liveToast" class="toast" role="alert" data-bs-autohide="true" data-bs-delay="3000">
         <div class="toast-header bg-primary text-white">
             <i class="bi bi-info-circle me-2"></i>
-            <strong class="me-auto" id="toastTitle">Уведомление</strong>
+            <strong class="me-auto" id="toastTitle">{% trans "Уведомление" %}</strong>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body" id="toastMessage"></div>
@@ -366,7 +367,7 @@
                 if (bsModal) bsModal.handleUpdate();
             })
             .catch(() => {
-                modalBody.innerHTML = '<div class="alert alert-danger">Ошибка загрузки формы</div>';
+                modalBody.innerHTML = '<div class="alert alert-danger">{% trans "Ошибка загрузки формы" %}</div>';
             });
     }
 
@@ -417,7 +418,7 @@
                 if (bsModal) bsModal.handleUpdate();
             })
             .catch(() => {
-                detailBody.innerHTML = '<div class="alert alert-danger">Ошибка загрузки деталей</div>';
+                detailBody.innerHTML = '<div class="alert alert-danger">{% trans "Ошибка загрузки деталей" %}</div>';
             });
     }
 
@@ -454,7 +455,7 @@
                 startStatusUpdates(collectionId);
             })
             .catch(() => {
-                body.innerHTML = '<div class="alert alert-danger">Ошибка загрузки списка документов</div>';
+                body.innerHTML = '<div class="alert alert-danger">{% trans "Ошибка загрузки списка документов" %}</div>';
             });
     }
 
@@ -609,7 +610,7 @@
                 if (bsModal) bsModal.handleUpdate();
             })
             .catch(err => {
-                uploadBody.innerHTML = '<div class="alert alert-danger">Не удалось загрузить форму загрузки</div>';
+                uploadBody.innerHTML = '<div class="alert alert-danger">{% trans "Не удалось загрузить форму загрузки" %}</div>';
                 console.error(err);
             });
     }

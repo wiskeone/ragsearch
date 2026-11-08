@@ -1,3 +1,4 @@
+{% load i18n %}
 <!-- templates/rag/document_detail_modal.html -->
 <div>
     <h4>{{ document.title|default:document.original_filename }}</h4>
@@ -6,28 +7,28 @@
     {% endif %}
     <hr>
     <dl class="row">
-        <dt class="col-sm-4">Оригинальное имя</dt>
+        <dt class="col-sm-4">{% trans "Оригинальное имя" %}</dt>
         <dd class="col-sm-8">{{ document.original_filename }}</dd>
-        <dt class="col-sm-4">Коллекция</dt>
+        <dt class="col-sm-4">{% trans "Коллекция" %}</dt>
         <dd class="col-sm-8">{{ document.collection.name }}</dd>
-        <dt class="col-sm-4">Размер</dt>
+        <dt class="col-sm-4">{% trans "Размер" %}</dt>
         <dd class="col-sm-8">{{ document.file_size_mb|floatformat:2 }} МБ</dd>
-        <dt class="col-sm-4">Статус</dt>
+        <dt class="col-sm-4">{% trans "Статус" %}</dt>
         <dd class="col-sm-8">
             {% if document.status == 'processed' %}
-            <span class="badge bg-success">Обработан</span>
+            <span class="badge bg-success">{% trans "Обработан" %}</span>
             {% elif document.status == 'processing' %}
-            <span class="badge bg-warning text-dark">В обработке</span>
+            <span class="badge bg-warning text-dark">{% trans "В обработке" %}</span>
             {% elif document.status == 'error' %}
-            <span class="badge bg-danger">Ошибка</span>
+            <span class="badge bg-danger">{% trans "Ошибка" %}</span>
             {% else %}
             <span class="badge bg-secondary">{{ document.status }}</span>
             {% endif %}
         </dd>
-        <dt class="col-sm-4">Загружен</dt>
+        <dt class="col-sm-4">{% trans "Загружен" %}</dt>
         <dd class="col-sm-8">{{ document.uploaded_at|date:"d.m.Y H:i" }}</dd>
         {% if document.tags %}
-        <dt class="col-sm-4">Теги</dt>
+        <dt class="col-sm-4">{% trans "Теги" %}</dt>
         <dd class="col-sm-8">{{ document.tags|join:", " }}</dd>
         {% endif %}
     </dl>
@@ -45,11 +46,11 @@
         </ul>
     </div>
     {% else %}
-    <p class="text-muted">Чанки ещё не созданы или документ не обработан.</p>
+    <p class="text-muted">{% trans "Чанки ещё не созданы или документ не обработан." %}</p>
     {% endif %}
     <div class="mt-3 text-end">
         <a href="{% url 'rag:document_download' document.id %}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-download"></i> Скачать
+            <i class="bi bi-download"></i> {% trans "Скачать" %}
         </a>
     </div>
 </div>

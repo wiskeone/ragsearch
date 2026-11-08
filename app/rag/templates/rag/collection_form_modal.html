@@ -1,3 +1,4 @@
+{% load i18n %}
 {% load static %}
 <div class="full-width-form">
     <form method="post" id="collectionForm">
@@ -6,81 +7,81 @@
 
         <!-- Основная информация -->
         <div class="mb-4">
-            <h5 class="border-bottom pb-2">Основная информация</h5>
+            <h5 class="border-bottom pb-2">{% trans "Основная информация" %}</h5>
             <div class="mb-3">
                 {{ form.name.label_tag }}
                 {{ form.name }}
-                <div class="form-text">Дайте коллекции понятное название</div>
+                <div class="form-text">{% trans "Дайте коллекции понятное название" %}</div>
                 <div class="text-danger small name-errors"></div>
             </div>
             <div class="mb-3">
                 {{ form.description.label_tag }}
                 {{ form.description }}
-                <div class="form-text">Опишите назначение и содержание</div>
+                <div class="form-text">{% trans "Опишите назначение и содержание" %}</div>
                 <div class="text-danger small description-errors"></div>
             </div>
             {% if request.user.is_staff %}
             <div class="mb-3 form-check form-switch">
                 {{ form.is_public }}
-                <label class="form-check-label" for="{{ form.is_public.id_for_label }}">Публичная коллекция</label>
+                <label class="form-check-label" for="{{ form.is_public.id_for_label }}">{% trans "Публичная коллекция" %}</label>
             </div>
             {% endif %}
         </div>
 
         <!-- Стратегии разделения (карточки с данными) -->
         <div class="mb-4">
-            <h5 class="border-bottom pb-2">Стратегия разделения на чанки</h5>
+            <h5 class="border-bottom pb-2">{% trans "Стратегия разделения на чанки" %}</h5>
             <div class="row g-3 mb-3" id="strategyCards">
                 <div class="col-md-4">
                     <div class="card strategy-card p-3 text-center" data-strategy="recursive" data-size="1000" data-overlap="200">
                         <i class="bi bi-files fs-2 text-primary"></i>
-                        <h6 class="mt-2">Рекурсивное</h6>
-                        <small>По структуре документа</small>
+                        <h6 class="mt-2">{% trans "Рекурсивное" %}</h6>
+                        <small>{% trans "По структуре документа" %}</small>
                         <div class="mt-2"><span class="badge bg-primary-soft text-primary">1000/200</span></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card strategy-card p-3 text-center" data-strategy="semantic" data-size="1500" data-overlap="300">
                         <i class="bi bi-chat-square-quote fs-2 text-primary"></i>
-                        <h6 class="mt-2">Семантическое</h6>
-                        <small>По смыслу</small>
+                        <h6 class="mt-2">{% trans "Семантическое" %}</h6>
+                        <small>{% trans "По смыслу" %}</small>
                         <div class="mt-2"><span class="badge bg-primary-soft text-primary">1500/300</span></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="card strategy-card p-3 text-center" data-strategy="paragraph" data-size="1500" data-overlap="300">
                         <i class="bi bi-paragraph fs-2 text-primary"></i>
-                        <h6 class="mt-2">По параграфам</h6>
-                        <small>По абзацам</small>
+                        <h6 class="mt-2">{% trans "По параграфам" %}</h6>
+                        <small>{% trans "По абзацам" %}</small>
                         <div class="mt-2"><span class="badge bg-primary-soft text-primary">1500/300</span></div>
                     </div>
                 </div>
             </div>
             <div class="text-center">
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="customStrategyBtn">Свои настройки</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="customStrategyBtn">{% trans "Свои настройки" %}</button>
             </div>
         </div>
 
         <!-- Детальные настройки (скрыты) -->
         <div id="customSettings" style="display: none;">
-            <h5 class="border-bottom pb-2">Детальные настройки</h5>
+            <h5 class="border-bottom pb-2">{% trans "Детальные настройки" %}</h5>
             <div class="row">
                 <div class="col-md-6 mb-3">{{ form.chunk_size.label_tag }} {{ form.chunk_size }}</div>
                 <div class="col-md-6 mb-3">{{ form.chunk_overlap.label_tag }} {{ form.chunk_overlap }}</div>
             </div>
             <div class="form-check form-switch mb-3">
                 {{ form.auto_process }}
-                <label class="form-check-label" for="{{ form.auto_process.id_for_label }}">Автоматическая обработка</label>
+                <label class="form-check-label" for="{{ form.auto_process.id_for_label }}">{% trans "Автоматическая обработка" %}</label>
             </div>
         </div>
 
         <!-- Визуализация разделения -->
         <div id="visualizationBlock" class="card bg-light mt-3">
             <div class="card-body">
-                <h6 class="card-title"><i class="bi bi-eye me-1"></i>Визуализация разделения на чанки</h6>
+                <h6 class="card-title"><i class="bi bi-eye me-1"></i>{% trans "Визуализация разделения на чанки" %}</h6>
                 <div class="d-flex justify-content-between mb-2">
-                    <small>Размер чанка: <span id="chunkSizeDisplay" class="fw-bold text-primary">1000</span></small>
-                    <small>Перекрытие: <span id="chunkOverlapDisplay" class="fw-bold text-primary">200</span></small>
+                    <small>{% trans "Размер чанка:" %} <span id="chunkSizeDisplay" class="fw-bold text-primary">1000</span></small>
+                    <small>{% trans "Перекрытие:" %} <span id="chunkOverlapDisplay" class="fw-bold text-primary">200</span></small>
                 </div>
                 <div class="chunk-visualization mb-2">
                     <div class="document-bar bg-secondary bg-opacity-25 rounded" style="height: 28px; position: relative;">
@@ -89,26 +90,26 @@
                         <div class="overlap position-absolute" style="left:40%; width:10%; height:100%; background-color:#3b82f6; opacity:0.6; border-radius:2px;"></div>
                     </div>
                     <div class="d-flex justify-content-between mt-1 small">
-                        <span>Чанк 1</span>
-                        <span class="text-primary fw-semibold" id="overlapPercentLabel">Перекрытие (20%)</span>
-                        <span>Чанк 2</span>
+                        <span>{% trans "Чанк 1" %}</span>
+                        <span class="text-primary fw-semibold" id="overlapPercentLabel">{% trans "Перекрытие (20%)" %}</span>
+                        <span>{% trans "Чанк 2" %}</span>
                     </div>
                 </div>
-                <div class="form-text"><i class="bi bi-lightbulb"></i> Перекрытие помогает сохранять контекст между фрагментами. Рекомендуется 10-20% от размера чанка.</div>
+                <div class="form-text"><i class="bi bi-lightbulb"></i> {% trans "Перекрытие помогает сохранять контекст между фрагментами. Рекомендуется 10-20% от размера чанка." %}</div>
             </div>
         </div>
 
         {{ form.chunking_strategy }}
 
         <div class="mt-4 border-top pt-3 d-flex justify-content-between">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{% trans "Отмена" %}</button>
             <div>
                 {% if edit_mode %}
-                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='update'">Сохранить</button>
-                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='update_and_add'">Сохранить и добавить документы</button>
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='update'">{% trans "Сохранить" %}</button>
+                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='update_and_add'">{% trans "Сохранить и добавить документы" %}</button>
                 {% else %}
-                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='create'">Создать коллекцию</button>
-                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='create_and_add'">Создать и добавить документы</button>
+                <button type="submit" class="btn btn-primary" onclick="document.getElementById('formAction').value='create'">{% trans "Создать коллекцию" %}</button>
+                <button type="submit" class="btn btn-outline-primary" onclick="document.getElementById('formAction').value='create_and_add'">{% trans "Создать и добавить документы" %}</button>
                 {% endif %}
             </div>
         </div>

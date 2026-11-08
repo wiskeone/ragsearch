@@ -1,4 +1,5 @@
 {% extends 'rag/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}Профиль — RAG Search{% endblock %}
@@ -16,7 +17,7 @@
                     
                     <!-- Основные поля профиля -->
                     <div class="mb-3">
-                        <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> Место работы</label>
+                        <label class="form-label fw-semibold"><i class="bi bi-building me-1"></i> {% trans "Место работы" %}</label>
                         {{ form.work_place }}
                     </div>
                     <div class="mb-3">
@@ -26,16 +27,16 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold"><i class="bi bi-key me-1"></i> Hugging Face Token</label>
                         {{ form.huggingface_token }}
-                        <div class="form-text">Токен для доступа к закрытым моделям</div>
+                        <div class="form-text">{% trans "Токен для доступа к закрытым моделям" %}</div>
                     </div>
                     
                     <hr>
-                    <h5 class="fw-semibold"><i class="bi bi-cpu me-2"></i>Мои модели</h5>
+                    <h5 class="fw-semibold"><i class="bi bi-cpu me-2"></i>{% trans "Мои модели" %}</h5>
                     
                     <div class="mb-3">
-                        <label for="llm_model_id" class="form-label fw-semibold">LLM модель для чата</label>
+                        <label for="llm_model_id" class="form-label fw-semibold">{% trans "LLM модель для чата" %}</label>
                         <select name="llm_model_id" id="llm_model_id" class="form-select">
-                            <option value="">-- По умолчанию --</option>
+                            <option value="">{% trans "-- По умолчанию --" %}</option>
                             {% for model in llm_models %}
                             <option value="{{ model.id }}" {% if user.profile.llm_model_id == model.id %}selected{% endif %}>
                                 {{ model.display_name|default:model.name }} ({{ model.get_model_type_display }})
@@ -44,9 +45,9 @@
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label for="embedding_model_id" class="form-label fw-semibold">Модель эмбеддингов</label>
+                        <label for="embedding_model_id" class="form-label fw-semibold">{% trans "Модель эмбеддингов" %}</label>
                         <select name="embedding_model_id" id="embedding_model_id" class="form-select">
-                            <option value="">-- По умолчанию --</option>
+                            <option value="">{% trans "-- По умолчанию --" %}</option>
                             {% for model in embedding_models %}
                             <option value="{{ model.id }}" {% if user.profile.embedding_model_id == model.id %}selected{% endif %}>
                                 {{ model.display_name|default:model.name }} ({{ model.embedding_dim }}d)
@@ -56,7 +57,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary w-100">
-                        <i class="bi bi-check-lg me-1"></i> Сохранить
+                        <i class="bi bi-check-lg me-1"></i> {% trans "Сохранить" %}
                     </button>
                 </form>
             </div>

@@ -1,4 +1,5 @@
 {% extends 'rag/base.html' %}
+{% load i18n %}
 {% load static %}
 
 {% block title %}Главная — RAG Search{% endblock %}
@@ -8,23 +9,23 @@
     <input type="hidden" id="totalDocumentsCount" value="{{ total_documents|default:0 }}">
 
     <div class="chat-controls">
-        <button class="control-btn" data-bs-toggle="offcanvas" data-bs-target="#settingsPanel" title="Настройки">
+        <button class="control-btn" data-bs-toggle="offcanvas" data-bs-target="#settingsPanel" title="{% trans 'Настройки' %}">
             <i class="bi bi-sliders2"></i>
         </button>
-        <button class="control-btn" data-bs-toggle="modal" data-bs-target="#sessionsModal" title="Мои чаты">
+        <button class="control-btn" data-bs-toggle="modal" data-bs-target="#sessionsModal" title="{% trans 'Мои чаты' %}">
             <i class="bi bi-chat-square-text"></i>
         </button>
     </div>
 
     <div class="offcanvas offcanvas-start" tabindex="-1" id="settingsPanel" style="max-width: 320px; background: var(--surface-1);">
         <div class="offcanvas-header border-bottom">
-            <h5 class="offcanvas-title fw-semibold"><i class="bi bi-sliders2 me-2"></i>Параметры</h5>
+            <h5 class="offcanvas-title fw-semibold"><i class="bi bi-sliders2 me-2"></i>{% trans "Параметры" %}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
         </div>
         <div class="offcanvas-body">
             {% if collections %}
             <div class="mb-3">
-                <label class="form-label fw-semibold">Коллекция</label>
+                <label class="form-label fw-semibold">{% trans "Коллекция" %}</label>
                 <div id="collectionList">
                     {% for coll in collections %}
                     <div class="form-check">
@@ -38,9 +39,9 @@
                 </div>
             </div>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Модель LLM</label>
+                <label class="form-label fw-semibold">{% trans "Модель LLM" %}</label>
                 <select class="form-select" id="llmModelSelect">
-                    <option value="">Только поиск</option>
+                    <option value="">{% trans "Только поиск" %}</option>
                     {% for model in llm_models %}
                     <option value="{{ model.id }}" {% if model.is_default %}selected{% endif %}>
                         {{ model.display_name|default:model.name }}
@@ -50,9 +51,9 @@
             </div>
             {% if embedding_models %}
             <div class="mb-3">
-                <label class="form-label fw-semibold">Модель эмбеддингов</label>
+                <label class="form-label fw-semibold">{% trans "Модель эмбеддингов" %}</label>
                 <select class="form-select" id="embeddingModelSelect">
-                    <option value="">По умолчанию</option>
+                    <option value="">{% trans "По умолчанию" %}</option>
                     {% for model in embedding_models %}
                     <option value="{{ model.id }}" {% if model.is_default %}selected{% endif %}>
                         {{ model.display_name|default:model.name }}
@@ -62,24 +63,24 @@
             </div>
             {% endif %}
             <div class="mb-3">
-                <label class="form-label fw-semibold">Температура: <span id="tempDisplay">0.7</span></label>
+                <label class="form-label fw-semibold">{% trans "Температура:" %} <span id="tempDisplay">0.7</span></label>
                 <input type="range" class="form-range" min="0.1" max="1.5" step="0.1" value="0.7" id="temperatureSlider">
             </div>
             <div class="mb-3">
-                <label class="form-label fw-semibold">Макс. токенов: <span id="tokensDisplay">512</span></label>
+                <label class="form-label fw-semibold">{% trans "Макс. токенов:" %} <span id="tokensDisplay">512</span></label>
                 <input type="range" class="form-range" min="100" max="2048" step="100" value="512" id="maxTokensSlider">
             </div>
             <div class="small text-secondary mt-2">
                 <i class="bi bi-files me-1"></i> Всего документов: {{ total_documents|default:0 }}
             </div>
             <a href="{% url 'rag:collection_list' %}" class="btn btn-outline-primary w-100 mt-2">
-                <i class="bi bi-folder-plus me-1"></i> Управление коллекциями
+                <i class="bi bi-folder-plus me-1"></i> {% trans "Управление коллекциями" %}
             </a>
             {% else %}
             <div class="text-center py-4">
                 <i class="bi bi-folder-x display-4 text-secondary"></i>
-                <p class="mt-3">Нет коллекций</p>
-                <a href="{% url 'rag:collection_list' %}" class="btn btn-primary">Создать коллекцию</a>
+                <p class="mt-3">{% trans "Нет коллекций" %}</p>
+                <a href="{% url 'rag:collection_list' %}" class="btn btn-primary">{% trans "Создать коллекцию" %}</a>
             </div>
             {% endif %}
         </div>
@@ -89,7 +90,7 @@
         <div class="chat-messages" id="chatMessages"></div>
         <div class="chat-footer">
             <div class="composer">
-                <textarea id="queryInput" rows="3" placeholder="Введите запрос или перетащите файлы..."></textarea>
+                <textarea id="queryInput" rows="3" placeholder="{% trans 'Введите запрос или перетащите файлы...' %}"></textarea>
                 <button class="send-btn" id="sendBtn" onclick="submitQuery()" disabled>
                     <i class="bi bi-send-fill fs-5"></i>
                 </button>
@@ -101,10 +102,10 @@
     <div class="text-center mt-5">
         <i class="bi bi-search-heart display-1" style="color: var(--primary);"></i>
         <h1 class="mt-3 fw-bold"><span class="bg-gradient-text">RAG Search</span></h1>
-        <p class="lead text-secondary">Интеллектуальный поиск по вашим документам с помощью ИИ</p>
+        <p class="lead text-secondary">{% trans "Интеллектуальный поиск по вашим документам с помощью ИИ" %}</p>
         <div class="d-flex gap-3 justify-content-center mt-4">
-            <a href="{% url 'rag:login' %}" class="btn btn-primary btn-lg px-4">Войти</a>
-            <a href="{% url 'rag:register' %}" class="btn btn-outline-primary btn-lg px-4">Регистрация</a>
+            <a href="{% url 'rag:login' %}" class="btn btn-primary btn-lg px-4">{% trans "Войти" %}</a>
+            <a href="{% url 'rag:register' %}" class="btn btn-outline-primary btn-lg px-4">{% trans "Регистрация" %}</a>
         </div>
     </div>
 {% endif %}
@@ -116,13 +117,13 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-chat-square-text me-2"></i>Мои чаты</h5>
+                    <h5 class="modal-title"><i class="bi bi-chat-square-text me-2"></i>{% trans "Мои чаты" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body" id="sessionsList"></div>
                 <div class="modal-footer">
-                    <button class="btn btn-outline-primary btn-sm" id="newChatBtn"><i class="bi bi-plus-lg me-1"></i> Новый чат</button>
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+                    <button class="btn btn-outline-primary btn-sm" id="newChatBtn"><i class="bi bi-plus-lg me-1"></i> {% trans "Новый чат" %}</button>
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{% trans "Закрыть" %}</button>
                 </div>
             </div>
         </div>
@@ -133,23 +134,23 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Выберите коллекцию</h5>
+                    <h5 class="modal-title">{% trans "Выберите коллекцию" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Коллекция</label>
+                        <label class="form-label">{% trans "Коллекция" %}</label>
                         <select class="form-select" id="existingCollectionSelect"></select>
-                        <button class="btn btn-link btn-sm mt-1" id="createNewCollectionBtn">+ Создать новую коллекцию</button>
+                        <button class="btn btn-link btn-sm mt-1" id="createNewCollectionBtn">{% trans "+ Создать новую коллекцию" %}</button>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Файлы для добавления</label>
+                        <label class="form-label">{% trans "Файлы для добавления" %}</label>
                         <div id="uploadingFilesList" class="file-attachments"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" id="addToCollectionBtn">Добавить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Отмена" %}</button>
+                    <button type="button" class="btn btn-primary" id="addToCollectionBtn">{% trans "Добавить" %}</button>
                 </div>
             </div>
         </div>
@@ -160,30 +161,30 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Создать коллекцию</h5>
+                    <h5 class="modal-title">{% trans "Создать коллекцию" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Название</label>
-                        <input type="text" class="form-control" id="newCollectionName" placeholder="Моя коллекция">
+                        <label class="form-label">{% trans "Название" %}</label>
+                        <input type="text" class="form-control" id="newCollectionName" placeholder="{% trans 'Моя коллекция' %}">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Стратегия разделения</label>
+                        <label class="form-label">{% trans "Стратегия разделения" %}</label>
                         <select class="form-select" id="chunkingStrategy">
-                            <option value="recursive">Рекурсивное (рекомендуется)</option>
-                            <option value="semantic">Семантическое</option>
-                            <option value="paragraph">По параграфам</option>
+                            <option value="recursive">{% trans "Рекурсивное (рекомендуется)" %}</option>
+                            <option value="semantic">{% trans "Семантическое" %}</option>
+                            <option value="paragraph">{% trans "По параграфам" %}</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Файлы</label>
+                        <label class="form-label">{% trans "Файлы" %}</label>
                         <div id="newCollectionFilesList" class="file-attachments"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="button" class="btn btn-primary" id="createCollectionAndUploadBtn">Создать и загрузить</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Отмена" %}</button>
+                    <button type="button" class="btn btn-primary" id="createCollectionAndUploadBtn">{% trans "Создать и загрузить" %}</button>
                 </div>
             </div>
         </div>
@@ -194,7 +195,7 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-transparent">
-                    <h5 class="modal-title" id="detailDocModalTitle">Фрагменты документа</h5>
+                    <h5 class="modal-title" id="detailDocModalTitle">{% trans "Фрагменты документа" %}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body" id="detailDocBody">
@@ -209,7 +210,7 @@
         <div id="liveToast" class="toast" role="alert" data-bs-autohide="true" data-bs-delay="3000">
             <div class="toast-header bg-primary text-white">
                 <i class="bi bi-info-circle me-2"></i>
-                <strong class="me-auto" id="toastTitle">Уведомление</strong>
+                <strong class="me-auto" id="toastTitle">{% trans "Уведомление" %}</strong>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
             </div>
             <div class="toast-body" id="toastMessage"></div>
@@ -309,7 +310,7 @@
                 <div class="search-result-header">
                     <strong>${escapeHtml(res.document_title)}</strong>
                     <button class="btn btn-sm btn-link source-chip" onclick='openDocumentSources(${res.document_id}, "${escapeHtml(res.document_title)}", "${res.chunk_id}")'>
-                        <i class="bi bi-eye"></i> Просмотреть
+                        <i class="bi bi-eye"></i> {% trans "Просмотреть" %}
                     </button>
                 </div>
                 <div class="search-result-content">${res.content_highlighted}</div>
@@ -378,10 +379,10 @@
             contentHtml += `
                 <div class="mt-3 text-end">
                     <a href="/api/documents/${documentId}/download/" class="btn btn-sm btn-outline-primary me-2" target="_blank">
-                        <i class="bi bi-download"></i> Скачать документ
+                        <i class="bi bi-download"></i> {% trans "Скачать документ" %}
                     </a>
                     <a href="/api/documents/${documentId}/download/" class="btn btn-sm btn-outline-secondary" target="_blank">
-                        <i class="bi bi-eye"></i> Просмотреть документ
+                        <i class="bi bi-eye"></i> {% trans "Просмотреть документ" %}
                     </a>
                 </div>
             `;
