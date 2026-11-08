@@ -12,12 +12,12 @@ Working plan for future releases. Order is approximate — items move up if some
 
 ## v3.0 — experience
 
-- [ ] **Streaming search UI** — show retrieval progress per stage (parse → embed → FAISS → BM25 → merge)
-- [ ] **Per-user quotas** — document count, storage size, LLM tokens (trial system is already partially wired)
+- [x] **Streaming search SSE** — backend endpoint `/api/search/stream/` with stage events; frontend hook next
+- [x] **Per-user quotas** — document count, storage size (TRIAL_MAX_STORAGE_MB), enforcement in upload, `/api/quota/` endpoint (v3.0)
 - [ ] **Document viewer** — inline PDF/preview with chunk highlighting from search results
-- [ ] **Export** — search results and chat transcripts to Markdown/CSV
-- [ ] **API keys** — token auth for programmatic access to `/api/`
-- [ ] **Role model** — admin / member separation beyond Django staff flag
+- [x] **Export** — search results to Markdown (`/api/export/search/markdown/`) (v3.0); chat transcripts next
+- [x] **API keys** — ApiKey model (SHA-256, prefix display), Bearer auth class, generate/list/revoke endpoints (v3.0)
+- [x] **Role model** — UserProfile.role (admin/member/viewer), permission helpers (is_admin, can_manage_models, can_delete_documents) (v3.0)
 
 ## v3.x — capabilities
 
