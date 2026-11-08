@@ -7,6 +7,7 @@ from django.contrib.auth import login
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST, require_http_methods
+from django.utils.translation import gettext as _
 from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
@@ -51,7 +52,7 @@ def profile_view(request):
         form = UserProfileForm(request.POST, instance=request.user.profile)
         if form.is_valid():
             form.save()
-            messages.success(request, 'Профиль обновлён.')
+            messages.success(request, _('Профиль обновлён.'))
             return redirect('rag:profile')
     else:
         form = UserProfileForm(instance=request.user.profile)
@@ -123,16 +124,16 @@ def collection_create_ajax(request):
     form = CollectionForm(request.POST)
     if form.is_valid():
         if not request.user.profile.can_create_collection():
-            return JsonResponse({'success': False, 'error': 'Достигнут лимит коллекций'})
+            return JsonResponse({'success': False, 'error': _('Достигнут лимит коллекций')})
         collection = form.save(commit=False)
         collection.owner = request.user
         collection.save()
         return JsonResponse({
             'success': True,
-            'message': f'Коллекция "{collection.name}" создана',
+            'message': _('%(name)s created') % {'name': collection.name},
             'collection_id': collection.id          # ← добавить
         })
-    return JsonResponse({'success': False, 'errors': form.errors, 'error': 'Проверьте правильность заполнения'})
+    return JsonResponse({'success': False, 'errors': form.errors, 'error': _('Проверьте правильность заполнения')})
 
 
 @require_POST
@@ -141,8 +142,8 @@ def collection_update_ajax(request, pk):
     form = CollectionForm(request.POST, instance=collection)
     if form.is_valid():
         form.save()
-        return JsonResponse({'success': True, 'message': f'Коллекция "{collection.name}" обновлена'})
-    return JsonResponse({'success': False, 'errors': form.errors, 'error': 'Проверьте правильность заполнения'})
+        return JsonResponse({'success': True, 'message': _('%(name)s updated') % {'name': collection.name}})
+    return JsonResponse({'success': False, 'errors': form.errors, 'error': _('Проверьте правильность заполнения')})
 
 
 @require_http_methods(["DELETE"])
@@ -150,7 +151,7 @@ def collection_delete_ajax(request, pk):
     collection = get_object_or_404(Collection, pk=pk, owner=request.user)
     name = collection.name
     collection.delete()
-    return JsonResponse({'success': True, 'message': f'Коллекция "{name}" удалена'})
+    return JsonResponse({'success': True, 'message': _('%(name)s deleted') % {'name': name}})
 
 
 def collection_detail_modal(request, pk):
@@ -176,7 +177,7 @@ def collection_detail_modal(request, pk):
 def collection_reindex(request, pk):
     collection = get_object_or_404(Collection, pk=pk, owner=request.user)
     if not collection.documents.exists():
-        return JsonResponse({'success': False, 'error': 'Нет документов для индексации'})
+        return JsonResponse({'success': False, 'error': _('Нет документов для индексации')})
     # Запускаем задачу, которая создаст эмбеддинги (если нужно) и построит индекс
     task = create_embeddings_for_collection_task.delay(collection.id)
     return JsonResponse({
@@ -220,19 +221,19 @@ def document_upload_ajax(request):
     """Прямая загрузка файлов без использования DocumentUploadForm."""
     collection_id = request.POST.get('collection')
     if not collection_id:
-        return JsonResponse({'success': False, 'error': 'Не указана коллекция'}, status=400)
+        return JsonResponse({'success': False, 'error': _('Не указана коллекция')}, status=400)
 
     try:
         collection = Collection.objects.get(id=collection_id, owner=request.user)
     except Collection.DoesNotExist:
-        return JsonResponse({'success': False, 'error': 'Коллекция не найдена'}, status=404)
+        return JsonResponse({'success': False, 'error': _('Коллекция не найдена')}, status=404)
 
     if not request.user.profile.can_upload_document():
-        return JsonResponse({'success': False, 'error': 'Достигнут лимит документов'}, status=400)
+        return JsonResponse({'success': False, 'error': _('Достигнут лимит документов')}, status=400)
 
     uploaded_files = request.FILES.getlist('files')
     if not uploaded_files:
-        return JsonResponse({'success': False, 'error': 'Файлы не переданы'}, status=400)
+        return JsonResponse({'success': False, 'error': _('Файлы не переданы')}, status=400)
 
     uploaded = []
     for f in uploaded_files:
@@ -281,8 +282,8 @@ def document_update_ajax(request, pk):
     form = DocumentEditForm(request.POST, instance=doc)
     if form.is_valid():
         form.save()
-        return JsonResponse({'success': True, 'message': f'Документ "{doc.title}" обновлён'})
-    return JsonResponse({'success': False, 'errors': form.errors, 'error': 'Ошибка валидации'})
+        return JsonResponse({'success': True, 'message': _('%(name)s updated') % {'name': doc.title}})
+    return JsonResponse({'success': False, 'errors': form.errors, 'error': _('Ошибка валидации')})
 
 
 @require_http_methods(["DELETE"])
@@ -292,7 +293,7 @@ def document_delete_ajax(request, pk):
         os.remove(doc.file_encrypted_path)
     title = doc.title
     doc.delete()
-    return JsonResponse({'success': True, 'message': f'Документ "{title}" удалён'})
+    return JsonResponse({'success': True, 'message': _('%(name)s deleted') % {'name': title}})
 
 
 def document_detail_modal(request, pk):
@@ -326,12 +327,12 @@ def search_view(request):
         query = request.POST.get('query', '').strip()
         collection_id = request.POST.get('collection_id')
         if not query or not collection_id:
-            messages.error(request, 'Введите запрос и выберите коллекцию.')
+            messages.error(request, _('Введите запрос и выберите коллекцию.'))
             return redirect('rag:search')
         try:
             collection = Collection.objects.get(pk=collection_id, owner=request.user)
         except Collection.DoesNotExist:
-            messages.error(request, 'Коллекция не найдена.')
+            messages.error(request, _('Коллекция не найдена.'))
             return redirect('rag:search')
         rag = RAGService()
         results = rag.hybrid_search(query, collection_id, top_k=10)
@@ -407,20 +408,20 @@ def ajax_document_status(request, pk):
     # Определяем статус
     status = doc.status  # 'uploaded', 'processing', 'processed', 'error'
     if status == 'uploaded':
-        status_display = 'Загружен'
+        status_display = _('Загружен')
         progress = 0
     elif status == 'processing':
-        status_display = 'Обработка'
+        status_display = _('Обработка')
         # Прогресс может быть известен из поля processing_progress (если есть)
         progress = getattr(doc, 'processing_progress', 0)
         if progress == 0 and total_chunks > 0:
             # Альтернативный расчёт
             progress = int((processed_chunks / total_chunks) * 100) if total_chunks else 0
     elif status == 'processed':
-        status_display = 'Готов'
+        status_display = _('Готов')
         progress = 100
     elif status == 'error':
-        status_display = 'Ошибка'
+        status_display = _('Ошибка')
         progress = 0
     else:
         status_display = status

@@ -5,6 +5,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.decorators import login_required, method_decorator
 from django.contrib.auth import login
+from django.utils.translation import gettext as _
 from django.http import JsonResponse
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -87,7 +88,7 @@ def api_chat(request):
     chunks = rag.get_chunks_details(results)
 
     if not chunks:
-        return Response({'answer': 'По вашему запросу ничего не найдено.', 'sources': []})
+        return Response({'answer': _('По вашему запросу ничего не найдено.'), 'sources': []})
 
     # ================= РЕЖИМ БЕЗ LLM (ПОИСК) =================
     if not llm_model_id:

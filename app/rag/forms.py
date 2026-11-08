@@ -1,6 +1,7 @@
 import os
 
 from django import forms
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django.core.exceptions import ValidationError
@@ -25,7 +26,7 @@ class MultipleFileInput(forms.ClearableFileInput):
 
 
 class RegistrationForm(UserCreationForm):
-    email = forms.EmailField(required=True, help_text='Обязательно для восстановления пароля')
+    email = forms.EmailField(required=True, help_text=_('Обязательно для восстановления пароля'))
 
     class Meta:
         model = User
@@ -52,12 +53,12 @@ class UserProfileForm(forms.ModelForm):
     llm_model_id = forms.ModelChoiceField(
         queryset=LLMModel.objects.filter(is_active=True, downloaded=True),
         required=False,
-        label="LLM модель для чата"
+        label=_('LLM модель для чата')
     )
     embedding_model_id = forms.ModelChoiceField(
         queryset=EmbeddingModel.objects.filter(is_active=True, downloaded=True),
         required=False,
-        label="Модель эмбеддингов"
+        label=_('Модель эмбеддингов')
     )
 
     class Meta:
@@ -110,33 +111,33 @@ class CollectionForm(forms.ModelForm):
         chunk_size = cleaned_data.get('chunk_size')
         chunk_overlap = cleaned_data.get('chunk_overlap')
         if chunk_size and chunk_overlap and chunk_overlap >= chunk_size:
-            raise ValidationError('Перекрытие чанков должно быть меньше их размера')
+            raise ValidationError(_('Перекрытие чанков должно быть меньше их размера'))
         return cleaned_data
 
 
 class DocumentUploadForm(forms.Form):
     collection = forms.ModelChoiceField(
         queryset=Collection.objects.none(),
-        label='Коллекция',
+        label=_('Коллекция'),
         widget=forms.HiddenInput()   # скрытое поле, заполняется через JS
     )
     files = forms.FileField(
         widget=MultipleFileInput(attrs={'class': 'form-control', 'style': 'display:none;'}),
-        label='Файлы'
+        label=_('Файлы')
     )
     title = forms.CharField(
         required=False,
-        label='Общий заголовок (опционально)',
+        label=_('Общий заголовок (опционально)'),
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Необязательно'})
     )
     description = forms.CharField(
         required=False,
-        label='Описание',
+        label=_('Описание'),
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'Описание документа'})
     )
     tags = forms.CharField(
         required=False,
-        label='Теги (через запятую)',
+        label=_('Теги (через запятую)'),
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'например: important, draft'})
     )
 
@@ -167,7 +168,7 @@ class DocumentUploadForm(forms.Form):
 class DocumentEditForm(forms.ModelForm):
     tags = forms.CharField(
         required=False,
-        label='Теги (через запятую)',
+        label=_('Теги (через запятую)'),
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'например: important, draft'})
     )
 
@@ -219,15 +220,15 @@ class LLMModelUploadForm(forms.ModelForm):
     def clean_model_id(self):
         model_id = self.cleaned_data.get('model_id', '').strip()
         if '/' not in model_id:
-            raise forms.ValidationError('Hugging Face ID должен быть в формате "author/model_name"')
+            raise forms.ValidationError(_('Hugging Face ID должен быть в формате "author/model_name"'))
         return model_id
 
     def clean_name(self):
         name = self.cleaned_data.get('name', '').strip()
         if not name:
-            raise forms.ValidationError('Имя модели обязательно')
+            raise forms.ValidationError(_('Имя модели обязательно'))
         if LLMModel.objects.filter(name=name).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Модель с таким именем уже существует')
+            raise forms.ValidationError(_('Модель с таким именем уже существует'))
         return name
 
 
@@ -268,25 +269,25 @@ class EmbeddingModelUploadForm(forms.ModelForm):
     def clean_model_id(self):
         model_id = self.cleaned_data.get('model_id', '').strip()
         if '/' not in model_id:
-            raise forms.ValidationError('Hugging Face ID должен быть в формате "author/model_name"')
+            raise forms.ValidationError(_('Hugging Face ID должен быть в формате "author/model_name"'))
         return model_id
 
     def clean_name(self):
         name = self.cleaned_data.get('name', '').strip()
         if not name:
-            raise forms.ValidationError('Имя модели обязательно')
+            raise forms.ValidationError(_('Имя модели обязательно'))
         if EmbeddingModel.objects.filter(name=name).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError('Модель с таким именем уже существует')
+            raise forms.ValidationError(_('Модель с таким именем уже существует'))
         return name
 
     def clean_embedding_dim(self):
         dim = self.cleaned_data.get('embedding_dim')
         if dim is not None and dim <= 0:
-            raise forms.ValidationError('Размерность должна быть положительным числом')
+            raise forms.ValidationError(_('Размерность должна быть положительным числом'))
         return dim
 
     def clean_max_tokens(self):
         max_tokens = self.cleaned_data.get('max_tokens')
         if max_tokens is not None and max_tokens <= 0:
-            raise forms.ValidationError('Максимальное количество токенов должно быть положительным')
+            raise forms.ValidationError(_('Максимальное количество токенов должно быть положительным'))
         return max_tokens

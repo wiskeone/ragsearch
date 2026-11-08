@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
@@ -9,10 +10,10 @@ import os
 class LLMModel(models.Model):
     """Модель LLM, загруженная из Hugging Face (только для админов)"""
     DOWNLOAD_STATUS_CHOICES = [
-        ('not_started', 'Не начата'),
-        ('downloading', 'Загрузка...'),
-        ('completed', 'Загружена'),
-        ('failed', 'Ошибка'),
+        ('not_started', _('Не начата')),
+        ('downloading', _('Загрузка...')),
+        ('completed', _('Загружена')),
+        ('failed', _('Ошибка')),
     ]
     MODEL_TYPE_CHOICES = [
         ('QWEN', 'Qwen'),
@@ -45,18 +46,18 @@ class LLMModel(models.Model):
 class EmbeddingModel(models.Model):
     """Модель эмбеддингов"""
     DOWNLOAD_STATUS_CHOICES = [
-        ('not_started', 'Не начата'),
-        ('downloading', 'Загрузка...'),
-        ('completed', 'Загружена'),
-        ('failed', 'Ошибка'),
+        ('not_started', _('Не начата')),
+        ('downloading', _('Загрузка...')),
+        ('completed', _('Загружена')),
+        ('failed', _('Ошибка')),
     ]
     name = models.CharField(max_length=255, unique=True)
     display_name = models.CharField(max_length=255, blank=True)
     model_id = models.CharField(max_length=500)  # Hugging Face ID
     embedding_dim = models.IntegerField()
-    max_tokens = models.IntegerField(default=512, help_text="Максимальное количество токенов на вход")
-    is_multilingual = models.BooleanField(default=False, help_text="Поддерживает ли несколько языков")
-    license_type = models.CharField(max_length=100, blank=True, help_text="Тип лицензии")
+    max_tokens = models.IntegerField(default=512, help_text=_('Максимальное количество токенов на вход'))
+    is_multilingual = models.BooleanField(default=False, help_text=_('Поддерживает ли несколько языков'))
+    license_type = models.CharField(max_length=100, blank=True, help_text=_('Тип лицензии'))
     is_active = models.BooleanField(default=True)
     is_default = models.BooleanField(default=False)
     downloaded = models.BooleanField(default=False)
@@ -178,10 +179,10 @@ class UserProfile(models.Model):
 
 class Collection(models.Model):
     CHUNK_STRATEGY_CHOICES = [
-        ('recursive', 'Рекурсивное разделение'),
-        ('semantic', 'Семантическое разделение'),
-        ('paragraph', 'По параграфам'),
-        ('custom', 'Свои настройки'),
+        ('recursive', _('Рекурсивное разделение')),
+        ('semantic', _('Семантическое разделение')),
+        ('paragraph', _('По параграфам')),
+        ('custom', _('Свои настройки')),
     ]
 
     name = models.CharField(max_length=255)
@@ -196,19 +197,19 @@ class Collection(models.Model):
         max_length=20,
         choices=CHUNK_STRATEGY_CHOICES,
         default='recursive',
-        help_text="Стратегия разделения документа на чанки"
+        help_text=_('Стратегия разделения документа на чанки')
     )
     chunk_size = models.IntegerField(
         default=1000,
-        help_text="Размер чанка в символах"
+        help_text=_('Размер чанка в символах')
     )
     chunk_overlap = models.IntegerField(
         default=200,
-        help_text="Перекрытие между чанками"
+        help_text=_('Перекрытие между чанками')
     )
     auto_process = models.BooleanField(
         default=True,
-        help_text="Автоматически обрабатывать новые документы после загрузки"
+        help_text=_('Автоматически обрабатывать новые документы после загрузки')
     )
 
     class Meta:
@@ -220,12 +221,12 @@ class Collection(models.Model):
 
 class Document(models.Model):
     STATUS_CHOICES = [
-        ('uploaded', 'Загружен'),
-        ('processing', 'Обработка'),
+        ('uploaded', _('Загружен')),
+        ('processing', _('Обработка')),
         # FIX: был 'indexed' в choices, но весь код (tasks/views) ставит и
         # фильтрует 'processed' — значения приведены к фактически используемому
-        ('processed', 'Проиндексирован'),
-        ('error', 'Ошибка'),
+        ('processed', _('Проиндексирован')),
+        ('error', _('Ошибка')),
     ]
 
     collection = models.ForeignKey(Collection, on_delete=models.CASCADE, related_name='documents')
@@ -268,8 +269,8 @@ class DocumentChunk(models.Model):
     embedding_vector = models.JSONField(null=True, blank=True)
     embedding_model = models.ForeignKey('EmbeddingModel', null=True, blank=True, on_delete=models.SET_NULL)
     has_embedding = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True, help_text="Активен ли чанк (мягкое удаление)")
-    embedding_dim = models.IntegerField(null=True, blank=True, help_text="Размерность эмбеддинга")
+    is_active = models.BooleanField(default=True, help_text=_('Активен ли чанк (мягкое удаление)'))
+    embedding_dim = models.IntegerField(null=True, blank=True, help_text=_('Размерность эмбеддинга'))
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

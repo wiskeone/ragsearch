@@ -3,10 +3,17 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ragsearch\n"
 "Language: en\n"
-"MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
-"Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "%(name)s created"
+msgstr "%(name)s created"
+
+msgid "%(name)s deleted"
+msgstr "%(name)s deleted"
+
+msgid "%(name)s updated"
+msgstr "%(name)s updated"
 
 msgid "+ Создать новую коллекцию"
 msgstr "+ Create new collection"
@@ -26,11 +33,20 @@ msgstr "« First"
 msgid "Автоматическая обработка"
 msgstr "Automatic processing"
 
+msgid "Автоматически обрабатывать новые документы после загрузки"
+msgstr "Automatically process new documents after upload"
+
+msgid "Активен ли чанк (мягкое удаление)"
+msgstr "Whether the chunk is active (soft delete)"
+
 msgid "В обработке"
 msgstr "Processing"
 
 msgid "В этой коллекции пока нет документов."
 msgstr "No documents in this collection yet."
+
+msgid "Введите запрос и выберите коллекцию."
+msgstr "Enter a query and select a collection."
 
 msgid "Введите запрос или перетащите файлы..."
 msgstr "Enter a query or drag files here..."
@@ -52,6 +68,9 @@ msgstr "Sign out"
 
 msgid "Главная"
 msgstr "Home"
+
+msgid "Готов"
+msgstr "Ready"
 
 msgid "Дайте коллекции понятное название"
 msgstr "Give the collection a clear name"
@@ -77,8 +96,17 @@ msgstr "Documents"
 msgid "Документы коллекции"
 msgstr "Collection documents"
 
+msgid "Достигнут лимит документов"
+msgstr "Document limit reached"
+
+msgid "Достигнут лимит коллекций"
+msgstr "Collection limit reached"
+
 msgid "Загружен"
 msgstr "Uploaded"
+
+msgid "Загружена"
+msgstr "Downloaded"
 
 msgid "Загрузить"
 msgstr "Upload"
@@ -89,11 +117,17 @@ msgstr "Upload document"
 msgid "Загрузка документов"
 msgstr "Uploading documents"
 
+msgid "Загрузка..."
+msgstr "Downloading..."
+
 msgid "Закрыть"
 msgstr "Close"
 
 msgid "Зарегистрироваться"
 msgstr "Sign up"
+
+msgid "Имя модели обязательно"
+msgstr "Model name is required"
 
 msgid "Интеллектуальный поиск по вашим документам с помощью ИИ"
 msgstr "AI-powered smart search across your documents"
@@ -104,11 +138,23 @@ msgstr "Collections"
 msgid "Коллекция"
 msgstr "Collection"
 
+msgid "Коллекция не найдена"
+msgstr "Collection not found"
+
+msgid "Коллекция не найдена."
+msgstr "Collection not found."
+
 msgid "Коллекция:"
 msgstr "Collection:"
 
 msgid "Макс. токенов:"
 msgstr "Max tokens:"
+
+msgid "Максимальное количество токенов должно быть положительным"
+msgstr "Max tokens must be a positive number"
+
+msgid "Максимальное количество токенов на вход"
+msgstr "Maximum input tokens"
 
 msgid "Место работы"
 msgstr "Workplace"
@@ -118,6 +164,9 @@ msgstr "Models"
 
 msgid "Модель LLM"
 msgstr "LLM model"
+
+msgid "Модель с таким именем уже существует"
+msgstr "A model with this name already exists"
 
 msgid "Модель эмбеддингов"
 msgstr "Embedding model"
@@ -140,8 +189,17 @@ msgstr "Name"
 msgid "Настройки"
 msgstr "Settings"
 
+msgid "Не начата"
+msgstr "Not started"
+
 msgid "Не удалось загрузить форму загрузки"
 msgstr "Failed to load the upload form"
+
+msgid "Не указана коллекция"
+msgstr "No collection specified"
+
+msgid "Нет документов для индексации"
+msgstr "No documents to index"
 
 msgid "Нет коллекций"
 msgstr "No collections"
@@ -167,8 +225,14 @@ msgstr "New chat"
 msgid "Обработан"
 msgstr "Processed"
 
+msgid "Обработка"
+msgstr "Processing"
+
 msgid "Общий заголовок (опционально)"
 msgstr "General title (optional)"
+
+msgid "Обязательно для восстановления пароля"
+msgstr "Required for password recovery"
 
 msgid "Описание"
 msgstr "Description"
@@ -188,6 +252,9 @@ msgstr "Cancel"
 msgid "Ошибка"
 msgstr "Error"
 
+msgid "Ошибка валидации"
+msgstr "Validation error"
+
 msgid "Ошибка загрузки деталей"
 msgstr "Failed to load details"
 
@@ -203,12 +270,18 @@ msgstr "Parameters"
 msgid "Перекрытие (20%)"
 msgstr "Overlap (20%)"
 
+msgid "Перекрытие между чанками"
+msgstr "Overlap between chunks"
+
 msgid ""
 "Перекрытие помогает сохранять контекст между фрагментами. Рекомендуется "
 "10-20% от размера чанка."
 msgstr ""
 "Overlap helps preserve context between chunks. 10–20% of the chunk size is "
 "recommended."
+
+msgid "Перекрытие чанков должно быть меньше их размера"
+msgstr "Chunk overlap must be smaller than the chunk size"
 
 msgid "Перекрытие:"
 msgstr "Overlap:"
@@ -222,6 +295,9 @@ msgstr "Drop files here"
 msgid "По абзацам"
 msgstr "By paragraphs"
 
+msgid "По вашему запросу ничего не найдено."
+msgstr "Nothing found for your query."
+
 msgid "По параграфам"
 msgstr "By paragraphs"
 
@@ -233,6 +309,9 @@ msgstr "By document structure"
 
 msgid "По умолчанию"
 msgstr "Default"
+
+msgid "Поддерживает ли несколько языков"
+msgstr "Whether multiple languages are supported"
 
 msgid "Поддерживаются PDF, DOCX, TXT, MD"
 msgstr "PDF, DOCX, TXT, MD are supported"
@@ -246,6 +325,12 @@ msgstr "Last »"
 msgid "Предыдущая"
 msgstr "Previous"
 
+msgid "Проверьте правильность заполнения"
+msgstr "Please check the entered data"
+
+msgid "Проиндексирован"
+msgstr "Indexed"
+
 msgid "Просмотреть"
 msgstr "View"
 
@@ -254,6 +339,9 @@ msgstr "View document"
 
 msgid "Профиль"
 msgstr "Profile"
+
+msgid "Профиль обновлён."
+msgstr "Profile updated."
 
 msgid "Публичная"
 msgstr "Public"
@@ -264,8 +352,17 @@ msgstr "Public collection"
 msgid "Размер"
 msgstr "Size"
 
+msgid "Размер чанка в символах"
+msgstr "Chunk size in characters"
+
 msgid "Размер чанка:"
 msgstr "Chunk size:"
+
+msgid "Размерность должна быть положительным числом"
+msgstr "Dimension must be a positive number"
+
+msgid "Размерность эмбеддинга"
+msgstr "Embedding dimension"
 
 msgid "Регистрация"
 msgstr "Sign up"
@@ -282,11 +379,17 @@ msgstr "Recursive"
 msgid "Рекурсивное (рекомендуется)"
 msgstr "Recursive (recommended)"
 
+msgid "Рекурсивное разделение"
+msgstr "Recursive splitting"
+
 msgid "Свои настройки"
 msgstr "Custom settings"
 
 msgid "Семантическое"
 msgstr "Semantic"
+
+msgid "Семантическое разделение"
+msgstr "Semantic splitting"
 
 msgid "Скачать"
 msgstr "Download"
@@ -324,6 +427,9 @@ msgstr "Status"
 msgid "Стратегия разделения"
 msgstr "Splitting strategy"
 
+msgid "Стратегия разделения документа на чанки"
+msgstr "Document chunking strategy"
+
 msgid "Стратегия разделения на чанки"
 msgstr "Chunking strategy"
 
@@ -335,6 +441,9 @@ msgstr "Tags (comma-separated)"
 
 msgid "Температура:"
 msgstr "Temperature:"
+
+msgid "Тип лицензии"
+msgstr "License type"
 
 msgid "Токен для доступа к закрытым моделям"
 msgstr "Token for accessing gated models"
@@ -362,6 +471,9 @@ msgstr "Files"
 
 msgid "Файлы для добавления"
 msgstr "Files to add"
+
+msgid "Файлы не переданы"
+msgstr "No files provided"
 
 msgid "Фрагменты документа"
 msgstr "Document chunks"
