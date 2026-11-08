@@ -7,7 +7,7 @@ Working plan for future releases. Order is approximate — items move up if some
 - [x] **Test suite** — encryption round-trip, parser (txt/md/html/csv), score-ordering regression (v2.0); RAG full-stack next
 - [x] **CI** — GitHub Actions: ruff, tests inside CPU image, compose config validation (v2.0)
 - [ ] **UI polish for EN** — finish translating Python-side leftovers (admin templates, remaining form messages)
-- [ ] **Prebuilt images on Docker Hub / GHCR** — `docker compose pull` instead of building locally
+- [x] **Prebuilt images on GHCR** — `ghcr.io/wiskeone/ragsearch-cpu:latest` (docker-publish.yml, GITHUB_TOKEN)
 - [x] **HTTPS profile for nginx** — `nginx/nginx.ssl.conf.template` (v2.0)
 
 ## v3.0 — experience
@@ -33,7 +33,7 @@ Working plan for future releases. Order is approximate — items move up if some
 
 План приблизительный — приоритеты двигаются по запросам.
 
-**v2.x — качество и доверие:** ✅ тесты (шифрование/парсер/скор-регресс), ✅ CI, ✅ HTTPS-профиль. Осталось: GHCR-образы, доводка EN-строк.
+**v2.x — качество и доверие:** ✅ тесты (шифрование/парсер/скор-регресс), ✅ CI, ✅ HTTPS-профиль, ✅ GHCR-образы + EN admin-шаблоны. Всё закрыто.
 
 **v3.0 — опыт:** стриминговый поиск с этапами, квоты пользователей, встроенный просмотрщик документов, экспорт результатов и чатов, API-ключи, роли.
 
