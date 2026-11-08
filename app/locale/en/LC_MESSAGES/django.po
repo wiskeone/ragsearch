@@ -21,6 +21,33 @@ msgstr "+ Create new collection"
 msgid "-- По умолчанию --"
 msgstr "-- Default --"
 
+msgid "0 результатов"
+msgstr "0 results"
+
+msgid "1. Тип модели"
+msgstr "1. Model type"
+
+msgid "2. Основная информация"
+msgstr "2. Basic information"
+
+msgid "3. Hugging Face параметры"
+msgstr "3. Hugging Face parameters"
+
+msgid "4. Поиск моделей на Hugging Face"
+msgstr "4. Search models on Hugging Face"
+
+msgid "5. Популярные модели"
+msgstr "5. Popular models"
+
+msgid "6. Параметры модели"
+msgstr "6. Model parameters"
+
+msgid "Hugging Face ID должен быть в формате \"author/model_name\""
+msgstr ""
+
+msgid "Hugging Face параметры"
+msgstr "Hugging Face parameters"
+
 msgid "LLM модели"
 msgstr "LLM models"
 
@@ -36,8 +63,14 @@ msgstr "Automatic processing"
 msgid "Автоматически обрабатывать новые документы после загрузки"
 msgstr "Automatically process new documents after upload"
 
+msgid "Автор:"
+msgstr "Author:"
+
 msgid "Активен ли чанк (мягкое удаление)"
 msgstr "Whether the chunk is active (soft delete)"
+
+msgid "Активна"
+msgstr "Active"
 
 msgid "В обработке"
 msgstr "Processing"
@@ -57,11 +90,17 @@ msgstr "Chunking visualization"
 msgid "Войти"
 msgstr "Sign in"
 
+msgid "Вперед"
+msgstr "Forward"
+
 msgid "Вход в систему"
 msgstr "Sign in"
 
 msgid "Выберите коллекцию"
 msgstr "Select a collection"
+
+msgid "Выбрать"
+msgstr "Select"
 
 msgid "Выйти"
 msgstr "Sign out"
@@ -78,17 +117,35 @@ msgstr "Give the collection a clear name"
 msgid "Дата"
 msgstr "Date"
 
+msgid "Действия"
+msgstr "Actions"
+
+msgid "Детали"
+msgstr "Details"
+
 msgid "Детали документа"
 msgstr "Document details"
 
 msgid "Детали коллекции"
 msgstr "Collection details"
 
+msgid "Детали модели"
+msgstr "Model details"
+
 msgid "Детальные настройки"
 msgstr "Advanced settings"
 
 msgid "Добавить"
 msgstr "Add"
+
+msgid "Добавить LLM модель с Hugging Face"
+msgstr "Add an LLM model from Hugging Face"
+
+msgid "Добавить модель"
+msgstr "Add model"
+
+msgid "Добавить модель эмбеддингов с Hugging Face"
+msgstr "Add an embedding model from Hugging Face"
 
 msgid "Документы"
 msgstr "Documents"
@@ -117,8 +174,14 @@ msgstr "Upload document"
 msgid "Загрузка документов"
 msgstr "Uploading documents"
 
+msgid "Загрузка популярных моделей..."
+msgstr "Loading popular models..."
+
 msgid "Загрузка..."
-msgstr "Downloading..."
+msgstr "Loading..."
+
+msgid "Загрузки:"
+msgstr "Downloads:"
 
 msgid "Закрыть"
 msgstr "Close"
@@ -126,11 +189,23 @@ msgstr "Close"
 msgid "Зарегистрироваться"
 msgstr "Sign up"
 
+msgid "Имя модели *"
+msgstr "Model name *"
+
 msgid "Имя модели обязательно"
 msgstr "Model name is required"
 
 msgid "Интеллектуальный поиск по вашим документам с помощью ИИ"
 msgstr "AI-powered smart search across your documents"
+
+msgid "Использовать по умолчанию"
+msgstr "Use as default"
+
+msgid "Квантизация"
+msgstr "Quantization"
+
+msgid "Квантизация:"
+msgstr "Quantization:"
 
 msgid "Коллекции"
 msgstr "Collections"
@@ -147,6 +222,21 @@ msgstr "Collection not found."
 msgid "Коллекция:"
 msgstr "Collection:"
 
+msgid "Контекст:"
+msgstr "Context:"
+
+msgid "Лицензия"
+msgstr "License"
+
+msgid "Лицензия:"
+msgstr "License:"
+
+msgid "Локальный путь:"
+msgstr "Local path:"
+
+msgid "Макс. токенов"
+msgstr "Max tokens"
+
 msgid "Макс. токенов:"
 msgstr "Max tokens:"
 
@@ -162,8 +252,17 @@ msgstr "Workplace"
 msgid "Модели"
 msgstr "Models"
 
+msgid "Модели эмбеддингов"
+msgstr "Embedding models"
+
 msgid "Модель LLM"
 msgstr "LLM model"
+
+msgid "Модель найдена"
+msgstr "Model found"
+
+msgid "Модель не найдена"
+msgstr "Model not found"
 
 msgid "Модель с таким именем уже существует"
 msgstr "A model with this name already exists"
@@ -183,11 +282,38 @@ msgstr "My chats"
 msgid "Моя коллекция"
 msgstr "My collection"
 
+msgid "Мультиязычная"
+msgstr "Multilingual"
+
+msgid "Мультиязычная:"
+msgstr "Multilingual:"
+
+msgid "Назад"
+msgstr "Back"
+
 msgid "Название"
 msgstr "Name"
 
+msgid "Название:"
+msgstr "Name:"
+
+msgid "Найдите модель в каталоге"
+msgstr "Find a model in the catalog"
+
+msgid "Найти"
+msgstr "Find"
+
 msgid "Настройки"
 msgstr "Settings"
+
+msgid "Начните поиск моделей на Hugging Face Hub"
+msgstr "Start searching models on the Hugging Face Hub"
+
+msgid "Начните поиск моделей эмбеддингов"
+msgstr "Start searching embedding models"
+
+msgid "Не загружена"
+msgstr "Not downloaded"
 
 msgid "Не начата"
 msgstr "Not started"
@@ -207,8 +333,20 @@ msgstr "No collections"
 msgid "Нет коллекций. Создайте первую."
 msgstr "No collections yet. Create the first one."
 
+msgid "Нет моделей."
+msgstr "No models."
+
 msgid "Нет описания"
 msgstr "No description"
+
+msgid "Нет популярных моделей"
+msgstr "No popular models"
+
+msgid "Нет популярных моделей для этого типа"
+msgstr "No popular models for this type"
+
+msgid "Ничего не найдено"
+msgstr "Nothing found"
 
 msgid "Ничего не найдено."
 msgstr "Nothing found."
@@ -221,6 +359,9 @@ msgstr "New search"
 
 msgid "Новый чат"
 msgstr "New chat"
+
+msgid "Обновить"
+msgstr "Refresh"
 
 msgid "Обработан"
 msgstr "Processed"
@@ -249,11 +390,17 @@ msgstr "Basic information"
 msgid "Отмена"
 msgstr "Cancel"
 
+msgid "Отображаемое имя"
+msgstr "Display name"
+
 msgid "Ошибка"
 msgstr "Error"
 
 msgid "Ошибка валидации"
 msgstr "Validation error"
+
+msgid "Ошибка загрузки"
+msgstr "Download error"
 
 msgid "Ошибка загрузки деталей"
 msgstr "Failed to load details"
@@ -264,8 +411,23 @@ msgstr "Failed to load the document list"
 msgid "Ошибка загрузки формы"
 msgstr "Failed to load the form"
 
+msgid "Ошибка поиска"
+msgstr "Search error"
+
+msgid "Ошибка:"
+msgstr "Error:"
+
 msgid "Параметры"
 msgstr "Parameters"
+
+msgid "Параметры модели"
+msgstr "Model parameters"
+
+msgid "Параметры:"
+msgstr "Parameters:"
+
+msgid "Перекачать"
+msgstr "Re-download"
 
 msgid "Перекрытие (20%)"
 msgstr "Overlap (20%)"
@@ -319,11 +481,32 @@ msgstr "PDF, DOCX, TXT, MD are supported"
 msgid "Подробнее"
 msgstr "Details"
 
+msgid "Поиск моделей эмбеддингов"
+msgstr "Search embedding models"
+
+msgid "Поиск моделей эмбеддингов..."
+msgstr "Search embedding models..."
+
+msgid "Поиск моделей..."
+msgstr "Search models..."
+
+msgid "Поиск..."
+msgstr "Search..."
+
+msgid "Популярные модели эмбеддингов"
+msgstr "Popular embedding models"
+
 msgid "Последняя »"
 msgstr "Last »"
 
 msgid "Предыдущая"
 msgstr "Previous"
+
+msgid "Проверить"
+msgstr "Check"
+
+msgid "Проверка..."
+msgstr "Checking..."
 
 msgid "Проверьте правильность заполнения"
 msgstr "Please check the entered data"
@@ -358,11 +541,20 @@ msgstr "Chunk size in characters"
 msgid "Размер чанка:"
 msgstr "Chunk size:"
 
+msgid "Размерность"
+msgstr "Dimension"
+
 msgid "Размерность должна быть положительным числом"
 msgstr "Dimension must be a positive number"
 
 msgid "Размерность эмбеддинга"
 msgstr "Embedding dimension"
+
+msgid "Размерность:"
+msgstr "Dimension:"
+
+msgid "Ревизия"
+msgstr "Revision"
 
 msgid "Регистрация"
 msgstr "Sign up"
@@ -397,8 +589,14 @@ msgstr "Download"
 msgid "Скачать документ"
 msgstr "Download document"
 
+msgid "Скачать сразу"
+msgstr "Download now"
+
 msgid "Следующая"
 msgstr "Next"
+
+msgid "Создана:"
+msgstr "Created:"
 
 msgid "Создание коллекции"
 msgstr "Create collection"
@@ -424,6 +622,15 @@ msgstr "Save and add documents"
 msgid "Статус"
 msgstr "Status"
 
+msgid "Статус загрузки"
+msgstr "Download status"
+
+msgid "Статус загрузки:"
+msgstr "Download status:"
+
+msgid "Страница 1"
+msgstr "Page 1"
+
 msgid "Стратегия разделения"
 msgstr "Splitting strategy"
 
@@ -442,8 +649,14 @@ msgstr "Tags (comma-separated)"
 msgid "Температура:"
 msgstr "Temperature:"
 
+msgid "Тип"
+msgstr "Type"
+
 msgid "Тип лицензии"
 msgstr "License type"
+
+msgid "Тип:"
+msgstr "Type:"
 
 msgid "Токен для доступа к закрытым моделям"
 msgstr "Token for accessing gated models"
@@ -492,3 +705,6 @@ msgstr "Embeddings"
 
 msgid "или нажмите для выбора"
 msgstr "or click to browse"
+
+msgid "Hugging Face ID должен быть в формате \"author/model_name\""
+msgstr "Hugging Face ID must be in the \"author/model_name\" format"

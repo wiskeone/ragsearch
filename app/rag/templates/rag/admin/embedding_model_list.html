@@ -1,9 +1,10 @@
 {% extends 'rag/base.html' %}
+{% load i18n %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Модели эмбеддингов</h2>
+    <h2>{% trans "Модели эмбеддингов" %}</h2>
     <a href="{% url 'rag:embedding_model_upload' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Добавить модель
+        <i class="bi bi-plus-lg"></i> {% trans "Добавить модель" %}
     </a>
 </div>
 
@@ -13,12 +14,12 @@
             <table class="table table-hover mb-0" id="embeddingModelsTable">
                 <thead>
                     <tr>
-                        <th>Название</th>
+                        <th>{% trans "Название" %}</th>
                         <th>HF ID</th>
-                        <th>Размерность</th>
-                        <th>Статус загрузки</th>
-                        <th>По умолчанию</th>
-                        <th>Действия</th>
+                        <th>{% trans "Размерность" %}</th>
+                        <th>{% trans "Статус загрузки" %}</th>
+                        <th>{% trans "По умолчанию" %}</th>
+                        <th>{% trans "Действия" %}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -26,7 +27,7 @@
                     <tr id="model-{{ model.id }}">
                         <td>
                             {{ model.display_name|default:model.name }}
-                            <button class="btn btn-sm btn-link text-primary model-details-btn" data-id="{{ model.id }}" title="Детали">
+                            <button class="btn btn-sm btn-link text-primary model-details-btn" data-id="{{ model.id }}" title="{% trans 'Детали' %}">
                                 <i class="bi bi-info-circle"></i>
                             </button>
                         </td>
@@ -34,7 +35,7 @@
                         <td>{{ model.embedding_dim }}</td>
                         <td class="status-cell">
                             {% if model.download_status == 'completed' %}
-                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Загружена</span>
+                                <span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> {% trans "Загружена" %}</span>
                             {% elif model.download_status == 'downloading' %}
                                 <div class="d-flex align-items-center gap-2">
                                     <div class="progress flex-grow-1" style="height: 8px;">
@@ -47,22 +48,22 @@
                                 </div>
                             {% elif model.download_status == 'failed' %}
                                 <span class="badge bg-danger" title="{{ model.download_error }}">
-                                    <i class="bi bi-exclamation-triangle-fill"></i> Ошибка
+                                    <i class="bi bi-exclamation-triangle-fill"></i> {% trans "Ошибка" %}
                                 </span>
                             {% else %}
-                                <span class="badge bg-secondary">Не загружена</span>
+                                <span class="badge bg-secondary">{% trans "Не загружена" %}</span>
                             {% endif %}
                         </td>
                         <td>{% if model.is_default %}<i class="bi bi-star-fill text-warning"></i>{% endif %}</td>
                         <td>
-                            <button class="btn btn-sm btn-outline-primary set-default" data-id="{{ model.id }}">По умолчанию</button>
+                            <button class="btn btn-sm btn-outline-primary set-default" data-id="{{ model.id }}">{% trans "По умолчанию" %}</button>
                             {% if model.download_status == 'completed' %}
                             <button class="btn btn-sm btn-outline-warning redownload-model" data-id="{{ model.id }}">
-                                <i class="bi bi-arrow-repeat"></i> Перекачать
+                                <i class="bi bi-arrow-repeat"></i> {% trans "Перекачать" %}
                             </button>
                             {% elif model.download_status != 'downloading' %}
                             <button class="btn btn-sm btn-outline-secondary download-model" data-id="{{ model.id }}">
-                                <i class="bi bi-cloud-download"></i> Скачать
+                                <i class="bi bi-cloud-download"></i> {% trans "Скачать" %}
                             </button>
                             {% endif %}
                             <button class="btn btn-sm btn-outline-danger delete-model" data-id="{{ model.id }}">
@@ -71,7 +72,7 @@
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" class="text-center">Нет моделей. <a href="{% url 'rag:embedding_model_upload' %}">Добавить</a></td></tr>
+                    <tr><td colspan="6" class="text-center">{% trans "Нет моделей." %} <a href="{% url 'rag:embedding_model_upload' %}">{% trans "Добавить" %}</a></td></tr>
                     {% endfor %}
                 </tbody>
             </table>
@@ -84,14 +85,14 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Детали модели</h5>
+                <h5 class="modal-title">{% trans "Детали модели" %}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body" id="modelDetailsBody">
                 <div class="text-center"><div class="spinner-border text-primary"></div></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Закрыть" %}</button>
             </div>
         </div>
     </div>
@@ -111,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const row = document.querySelector(`#model-${modelId} .status-cell`);
                 if (!row) return;
                 if (data.status === 'completed') {
-                    row.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> Загружена</span>';
+                    row.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle-fill"></i> {% trans "Загружена" %}</span>';
                     const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
                     if (actionsCell && !actionsCell.querySelector('.redownload-model')) {
                         const redownloadBtn = document.createElement('button');
@@ -138,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     attachCancelHandler(modelId);
                     setTimeout(() => updateStatus(modelId), 2000);
                 } else if (data.status === 'failed') {
-                    row.innerHTML = `<span class="badge bg-danger" title="${data.error}"><i class="bi bi-exclamation-triangle-fill"></i> Ошибка</span>`;
+                    row.innerHTML = `<span class="badge bg-danger" title="${data.error}"><i class="bi bi-exclamation-triangle-fill"></i> {% trans "Ошибка" %}</span>`;
                     const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
                     if (actionsCell && !actionsCell.querySelector('.download-model')) {
                         const downloadBtn = document.createElement('button');
@@ -151,7 +152,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         attachDownloadHandler(modelId);
                     }
                 } else {
-                    row.innerHTML = '<span class="badge bg-secondary">Не загружена</span>';
+                    row.innerHTML = '<span class="badge bg-secondary">{% trans "Не загружена" %}</span>';
                     const actionsCell = document.querySelector(`#model-${modelId} td:last-child`);
                     if (actionsCell && !actionsCell.querySelector('.download-model')) {
                         const downloadBtn = document.createElement('button');
@@ -239,20 +240,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await resp.json();
                 body.innerHTML = `
                     <table class="table table-sm table-borderless">
-                        <tr><th>Название:</th><td>${data.display_name || data.name}</td></tr>
+                        <tr><th>{% trans "Название:" %}</th><td>${data.display_name || data.name}</td></tr>
                         <tr><th>HF ID:</th><td><code>${data.model_id}</code></td></tr>
-                        <tr><th>Размерность:</th><td>${data.embedding_dim}</td></tr>
-                        <tr><th>Макс. токенов:</th><td>${data.max_tokens || '—'}</td></tr>
-                        <tr><th>Мультиязычная:</th><td>${data.is_multilingual ? 'Да' : 'Нет'}</td></tr>
-                        <tr><th>Лицензия:</th><td>${data.license_type || '—'}</td></tr>
-                        <tr><th>Локальный путь:</th><td><code>${data.local_path || '—'}</code></td></tr>
-                        <tr><th>Статус загрузки:</th><td>${data.download_status_display}</td></tr>
-                        <tr><th>Создана:</th><td>${new Date(data.created_at).toLocaleString()}</td></tr>
-                        ${data.download_error ? `<tr><th>Ошибка:</th><td class="text-danger">${data.download_error}</td></tr>` : ''}
+                        <tr><th>{% trans "Размерность:" %}</th><td>${data.embedding_dim}</td></tr>
+                        <tr><th>{% trans "Макс. токенов:" %}</th><td>${data.max_tokens || '—'}</td></tr>
+                        <tr><th>{% trans "Мультиязычная:" %}</th><td>${data.is_multilingual ? 'Да' : 'Нет'}</td></tr>
+                        <tr><th>{% trans "Лицензия:" %}</th><td>${data.license_type || '—'}</td></tr>
+                        <tr><th>{% trans "Локальный путь:" %}</th><td><code>${data.local_path || '—'}</code></td></tr>
+                        <tr><th>{% trans "Статус загрузки:" %}</th><td>${data.download_status_display}</td></tr>
+                        <tr><th>{% trans "Создана:" %}</th><td>${new Date(data.created_at).toLocaleString()}</td></tr>
+                        ${data.download_error ? `<tr><th>{% trans "Ошибка:" %}</th><td class="text-danger">${data.download_error}</td></tr>` : ''}
                     </table>
                 `;
             } catch(e) {
-                body.innerHTML = '<div class="alert alert-danger">Ошибка загрузки деталей</div>';
+                body.innerHTML = '<div class="alert alert-danger">{% trans "Ошибка загрузки деталей" %}</div>';
             }
         });
     });
