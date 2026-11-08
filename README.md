@@ -104,6 +104,10 @@ prometheus/ grafana/ nginx/ scripts/ docker_volumes/
 - Keep `DEBUG=False` and set `ALLOWED_HOSTS` in any shared deployment.
 - The default compose file binds helper UIs (pgAdmin, Flower, Grafana) to all interfaces — restrict or firewall them.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
