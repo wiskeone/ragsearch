@@ -16,6 +16,14 @@ urlpatterns = [
     # HF
     path('api/huggingface/', api_views.HuggingFaceAPI.as_view(), name='huggingface_api'),
 
+    # v3.0: API-ключи, квоты, экспорт
+    path('api/keys/generate/', api_views.api_generate_key, name='api_generate_key'),
+    path('api/keys/', api_views.api_list_keys, name='api_list_keys'),
+    path('api/keys/<int:key_id>/revoke/', api_views.api_revoke_key, name='api_revoke_key'),
+    path('api/quota/', api_views.api_quota_status, name='api_quota_status'),
+    path('api/export/search/markdown/', api_views.api_export_search_markdown, name='api_export_search_markdown'),
+    path('api/search/stream/', api_views.api_search_stream, name='api_search_stream'),
+
     # Коллекции – единственная страница
     path('collections/', views.collection_list, name='collection_list'),
 

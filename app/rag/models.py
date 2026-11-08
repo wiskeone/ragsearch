@@ -87,6 +87,14 @@ class UserProfile(models.Model):
     _telegram = models.CharField(max_length=100, blank=True, db_column='telegram')
     
     work_place = models.CharField(max_length=200, blank=True)
+    # v3.0: роль для разграничения доступа (admin > member > viewer)
+    ROLE_CHOICES = [
+        ('admin', 'Admin'),
+        ('member', 'Member'),
+        ('viewer', 'Viewer'),
+    ]
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='member')
+
     account_status = models.CharField(max_length=20, choices=ACCOUNT_STATUS_CHOICES, default='trial')
     trial_expires_at = models.DateTimeField(null=True, blank=True)
     pro_expires_at = models.DateTimeField(null=True, blank=True)
@@ -151,6 +159,25 @@ class UserProfile(models.Model):
             return True
         coll_count = Collection.objects.filter(owner=self.user).count()
         return coll_count < settings.TRIAL_MAX_COLLECTIONS
+
+    # v3.0: ролевые хелперы
+    @property
+    def is_admin(self):
+        return self.role == 'admin' or self.user.is_superuser
+
+    @property
+    def is_member(self):
+        return self.role in ('admin', 'member')
+
+    @property
+    def can_manage_models(self):
+        """Загрузка/удаление моделей — только admin."""
+        return self.is_admin
+
+    @property
+    def can_delete_documents(self):
+        """Удаление документов — member и admin."""
+        return self.is_member
 
     def is_trial_active(self):
         if self.account_status != 'trial':
@@ -307,3 +334,23 @@ class ChatSession(models.Model):
 
     def __str__(self):
         return self.title or f"Chat {self.id}"
+
+class ApiKey(models.Model):
+    """v3.0: API-ключ для программного доступа к /api/ (Bearer auth)."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
+    name = models.CharField(max_length=100, help_text="Метка ключа (для пользователя)")
+    key_hash = models.CharField(max_length=64, unique=True, help_text="SHA-256 ключа (сырой ключ НЕ хранится)")
+    prefix = models.CharField(max_length=12, help_text="Первые 8 символов ключа для отображения")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    last_used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['key_hash']),
+            models.Index(fields=['user', 'is_active']),
+        ]
+
+    def __str__(self):
+        return f"{self.prefix}… ({self.user.username})"

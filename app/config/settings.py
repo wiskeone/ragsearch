@@ -158,6 +158,7 @@ if not ENCRYPTION_KEY and not DEBUG:
 
 TRIAL_MAX_DOCUMENTS = int(os.getenv('TRIAL_MAX_DOCUMENTS', 50))
 TRIAL_MAX_COLLECTIONS = int(os.getenv('TRIAL_MAX_COLLECTIONS', 5))
+TRIAL_MAX_STORAGE_MB = int(os.getenv("TRIAL_MAX_STORAGE_MB", "500"))
 
 HF_ENDPOINT = os.getenv('HF_ENDPOINT', 'https://hf-mirror.com')
 os.environ['HF_ENDPOINT'] = HF_ENDPOINT

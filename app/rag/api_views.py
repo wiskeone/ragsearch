@@ -814,3 +814,212 @@ def llm_delete(request, model_id):
 
 
 
+
+
+# ============================================================================
+# v3.0: API-ключи, квоты, экспорт
+# ============================================================================
+
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from django.http import HttpResponse
+from .api_key_auth import generate_api_key
+from .models import ApiKey, UserProfile, Document, Collection
+from django.conf import settings
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_generate_key(request):
+    """Создать API-ключ. Сырой ключ возвращается ОДИН РАЗ."""
+    name = (request.data.get('name') or '').strip()[:100]
+    if not name:
+        return Response({'error': 'name required'}, status=400)
+
+    # лимит: максимум 5 активных ключей на пользователя
+    active_count = ApiKey.objects.filter(user=request.user, is_active=True).count()
+    if active_count >= 5:
+        return Response({'error': 'Maximum 5 active keys. Revoke one first.'}, status=400)
+
+    raw, key_hash, prefix = generate_api_key()
+    key = ApiKey.objects.create(
+        user=request.user, name=name, key_hash=key_hash, prefix=prefix
+    )
+    return Response({
+        'id': key.id,
+        'name': key.name,
+        'key': raw,  # ОДИН РАЗ — потом только prefix
+        'prefix': prefix,
+        'created_at': key.created_at.isoformat(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_list_keys(request):
+    """Список ключей пользователя (без сырых ключей)."""
+    keys = ApiKey.objects.filter(user=request.user, is_active=True).values(
+        'id', 'name', 'prefix', 'created_at', 'last_used_at'
+    )
+    return Response({'keys': list(keys)})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_revoke_key(request, key_id):
+    key = ApiKey.objects.filter(id=key_id, user=request.user).first()
+    if not key:
+        return Response({'error': 'Key not found'}, status=404)
+    key.is_active = False
+    key.save()
+    return Response({'success': True})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_quota_status(request):
+    """Текущие квоты пользователя: документы, коллекции, размер."""
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'Profile not found'}, status=404)
+
+    doc_count = Document.objects.filter(collection__owner=request.user).count()
+    coll_count = Collection.objects.filter(owner=request.user).count()
+
+    # суммарный размер оригинальных файлов (расшифрованные)
+    total_size = sum(
+        d.file_size_mb for d in Document.objects.filter(
+            collection__owner=request.user
+        )
+    )
+
+    is_pro = profile.account_status == 'pro'
+    return Response({
+        'account_status': profile.account_status,
+        'role': profile.role,
+        'documents': {
+            'used': doc_count,
+            'limit': None if is_pro else settings.TRIAL_MAX_DOCUMENTS,
+        },
+        'collections': {
+            'used': coll_count,
+            'limit': None if is_pro else settings.TRIAL_MAX_COLLECTIONS,
+        },
+        'storage_mb': {
+            'used': round(total_size, 1),
+            'limit': None if is_pro else getattr(settings, 'TRIAL_MAX_STORAGE_MB', 500),
+        },
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def api_export_search_markdown(request):
+    """Экспорт результатов поиска в Markdown.
+
+    POST: {query, collection_id, results: [{document_title, content, score}]}
+    Возвращает .md файл.
+    """
+    query = request.data.get('query', '')
+    collection_name = request.data.get('collection_name', '')
+    results = request.data.get('results', [])
+
+    lines = [
+        f"# Search Results: {query}",
+        f"**Collection:** {collection_name}",
+        f"**Date:** {request.data.get('date', '')}",
+        f"**Results:** {len(results)}",
+        "",
+    ]
+    for i, r in enumerate(results, 1):
+        title = r.get('document_title', 'Untitled')
+        content = r.get('content', '')
+        score = r.get('score', 0)
+        lines.append(f"## {i}. {title} (score: {score:.2f})")
+        lines.append("")
+        lines.append(content)
+        lines.append("")
+
+    md = "\n".join(lines)
+    response = HttpResponse(md, content_type='text/markdown; charset=utf-8')
+    filename = f"search_{query[:30].replace(' ', '_')}.md" if query else "search_results.md"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_search_stream(request):
+    """
+    v3.0: SSE-эндпоинт для стримингового поиска.
+
+    GET /api/search/stream/?collection_id=1&query=...
+    Content-Type: text/event-stream
+    События: stage (этап), result (финальные результаты), error.
+    """
+    from django.http import StreamingHttpResponse
+    import json
+    import time
+
+    query = request.GET.get('query', '').strip()
+    collection_id = request.GET.get('collection_id')
+
+    if not query or not collection_id:
+        return Response({'error': 'query and collection_id required'}, status=400)
+
+    def event_stream():
+        def sse(event, data):
+            return f"event: {event}\ndata: {json.dumps(data)}\n\n"
+
+        yield sse('stage', {'stage': 'embedding', 'message': 'Generating query embedding...'})
+        try:
+            rag = RAGService()
+            # 1. Embedding
+            query_emb = rag.embedding_service.create_embedding(
+                query, normalize=True
+            )
+            yield sse('stage', {'stage': 'semantic', 'message': 'FAISS search...'})
+            # 2. FAISS
+            semantic_results = rag.faiss.search(int(collection_id), query_emb, k=20)
+            yield sse('stage', {'stage': 'bm25', 'message': 'BM25 keyword search...'})
+            # 3. BM25
+            keyword_results = rag.bm25.search(int(collection_id), query, top_k=20)
+            yield sse('stage', {'stage': 'merge', 'message': 'Merging results...'})
+            # 4. Merge
+            merged = {}
+            for r in semantic_results:
+                merged[r['chunk_id']] = {'semantic': r['score'], 'keyword': 0.0}
+            for r in keyword_results:
+                if r['chunk_id'] in merged:
+                    merged[r['chunk_id']]['keyword'] = r['score']
+                else:
+                    merged[r['chunk_id']] = {'semantic': 0.0, 'keyword': r['score']}
+
+            sem_scores = [v['semantic'] for v in merged.values()]
+            kw_scores = [v['keyword'] for v in merged.values()]
+            max_sem = max(sem_scores) if sem_scores else 1
+            max_kw = max(kw_scores) if kw_scores else 1
+            if max_sem > 0: max_sem = 1
+            if max_kw > 0: max_kw = 1
+
+            scored = []
+            for cid, v in merged.items():
+                score = 0.7 * (v['semantic'] / max_sem if max_sem else 0) + \
+                        0.3 * (v['keyword'] / max_kw if max_kw else 0)
+                scored.append({'chunk_id': cid, 'score': score})
+            scored.sort(key=lambda x: x['score'], reverse=True)
+            results = scored[:10]
+
+            yield sse('stage', {'stage': 'loading', 'message': 'Loading chunk details...'})
+            chunks = rag.get_chunks_details(results)
+
+            yield sse('result', {'results': chunks, 'total': len(chunks)})
+        except Exception as e:
+            yield sse('error', {'error': str(e)})
+
+    response = StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response
