@@ -4,11 +4,11 @@ Working plan for future releases. Order is approximate — items move up if some
 
 ## v2.x — quality & trust
 
-- [ ] **Test suite** — pytest coverage for RAG services (chunking, hybrid merge), encryption round-trip, API auth matrix
-- [ ] **CI** — GitHub Actions: lint (ruff), `python manage.py check`, template parse validation, docker build (CPU image)
+- [x] **Test suite** — encryption round-trip, parser (txt/md/html/csv), score-ordering regression (v2.0); RAG full-stack next
+- [x] **CI** — GitHub Actions: ruff, tests inside CPU image, compose config validation (v2.0)
 - [ ] **UI polish for EN** — finish translating Python-side leftovers (admin templates, remaining form messages)
 - [ ] **Prebuilt images on Docker Hub / GHCR** — `docker compose pull` instead of building locally
-- [ ] **HTTPS profile for nginx** — ready-made TLS config + Let's Encrypt instructions
+- [x] **HTTPS profile for nginx** — `nginx/nginx.ssl.conf.template` (v2.0)
 
 ## v3.0 — experience
 
@@ -33,7 +33,7 @@ Working plan for future releases. Order is approximate — items move up if some
 
 План приблизительный — приоритеты двигаются по запросам.
 
-**v2.x — качество и доверие:** тест-сьют (RAG-сервисы, шифрование, авторизация), CI (ruff + check + сборка CPU-образа), доводка EN-строк, готовые образы в GHCR, HTTPS-профиль nginx.
+**v2.x — качество и доверие:** ✅ тесты (шифрование/парсер/скор-регресс), ✅ CI, ✅ HTTPS-профиль. Осталось: GHCR-образы, доводка EN-строк.
 
 **v3.0 — опыт:** стриминговый поиск с этапами, квоты пользователей, встроенный просмотрщик документов, экспорт результатов и чатов, API-ключи, роли.
 
